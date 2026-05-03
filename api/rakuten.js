@@ -13,9 +13,17 @@ export default async function handler(req, res) {
     imageFlag: 1,
     applicationId: '55c4783b-4e2e-47c2-a792-54d85b8aabcd',
   });
+
   const url = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601?${params}`;
+
   try {
-    const r = await fetch(url);
+    const r = await fetch(url, {
+      headers: {
+        'Referer': 'https://rakuten-gift-tool.vercel.app/',
+        'Origin': 'https://rakuten-gift-tool.vercel.app',
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
     const data = await r.json();
     res.status(200).json(data);
   } catch (e) {
