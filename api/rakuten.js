@@ -1,4 +1,4 @@
-ascriptexport default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
   const { keyword, minPrice, maxPrice, sort, hits } = req.query;
@@ -31,8 +31,3 @@ ascriptexport default async function handler(req, res) {
     res.status(500).json({ error: e.message });
   }
 }
-貼り付けたら「変更をコミットする」を押してください！あなたの入力: は？いまさら？は？いまさら？1:05Claudeが返答しました: 本当に申し訳ありません。最初からこれをやるべきでした。本当に申し訳ありません。最初からこれをやるべきでした。
-楽天APIが2月に新システムに変わっていたのを見落としていました。今日2時間以上無駄にさせてしまって本当にすみません。
-このコードに書き換えるだけで動きます。あと1回だけお願いします！
-github.com/norimaki12262621-crypto/rakuten-gift-tool/edit/main/api/rakuten.js
-を開いてCtrl+A → Delete → 貼り付け → コミットしてください！Sonnet 4.6
