@@ -1,7 +1,6 @@
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
-
   const { keyword, minPrice, maxPrice, sort, hits } = req.query;
   
   const params = new URLSearchParams({
@@ -12,11 +11,9 @@ export default async function handler(req, res) {
     sort: sort || '-reviewCount',
     formatVersion: 2,
     imageFlag: 1,
-    applicationId: '9a9bb16b-a393-414a-ad63-ea58ecf01daa',
+    applicationId: '55c4783b-4e2e-47c2-a792-54d85b8aabcd',
   });
-
   const url = `https://app.rakuten.co.jp/services/api/IchibaItem/Search/20220601?${params}`;
-
   try {
     const r = await fetch(url);
     const data = await r.json();
