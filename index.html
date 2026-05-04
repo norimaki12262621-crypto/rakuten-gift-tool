@@ -359,7 +359,7 @@ async function run() {
       .map(i=>({item:i,sc:score(i,minAvg,minCnt)}))
       .filter(x=>x.sc>0)
       .sort((a,b)=>b.sc-a.sc)
-      .slice(0,5);
+      .filter((x,i,self)=>self.findIndex(y=>y.item.shopCode===x.item.shopCode)===i).slice(0,5);
 
     if (scored.length<2) throw new Error(`バリデーション通過が${scored.length}件のみです。最低評価・レビュー数の条件を緩めてください。`);
 
