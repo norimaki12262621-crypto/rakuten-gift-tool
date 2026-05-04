@@ -392,12 +392,16 @@ const maxP = document.getElementById('priceMax').value || 999999;
       formatVersion: 2,
       imageFlag: 1
     });
-    const res = await fetch(`/api/rakuten?${params}`);
-    if (!res.ok) throw new Error(`サーバーエラー (${res.status})`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error_description||data.error);
+    const res1 = await fetch(`/api/rakuten?${params}`);
+if (!res1.ok) throw new Error(`サーバーエラー (${res1.status})`);
+const data1 = await res1.json();
+if (data1.error) throw new Error(data1.error_description||data1.error);
 
-    const rawItems = data.Items||[];
+const params2 = new URLSearchParams({...Object.fromEntries(params), sort: '-reviewAverage'});
+const res2 = await fetch(`/api/rakuten?${params2}`);
+const data2 = res2.ok ? await res2.json() : {Items:[]};
+
+const rawItems = [...(data1.Items||[]), ...(data2.Items||[])];
     const items = rawItems.map(i => i.Item || i);
     if (!items.length) throw new Error('該当商品がありません。条件を変えてください。');
 
