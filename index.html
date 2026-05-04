@@ -303,9 +303,10 @@ function card(item, rank, sc) {
       <button class="cp-btn" onclick="cp('${aff.replace(/'/g,"\\'")}',this)">コピー</button>
     </div>
     ${bestImg||medImg ? `
-    <div class="kw-lbl" style="margin-top:10px;">📸 商品画像（長押しで保存 → ChatGPTに添付）</div>
-    <div style="text-align:center;margin:6px 0 4px;">
-      <img src="${bestImg||medImg}" style="max-width:100%;max-height:220px;object-fit:contain;border-radius:8px;border:1px solid #e8e0d4;background:#f9f5ee;" alt="商品画像" onerror="this.style.display='none'">
+   <div class="kw-box">
+      <span class="kw-text aff-url">${aff.substring(0,55)}...</span>
+      <button class="cp-btn" onclick="cp('${aff.replace(/'/g,"\\'")}',this)">コピー</button>
+      <a href="${aff}" target="_blank" style="flex-shrink:0;font-size:11px;padding:4px 10px;border:1px solid var(--gold);border-radius:4px;color:var(--gold);text-decoration:none;white-space:nowrap;">開く↗</a>
     </div>
     <div style="font-size:10px;color:#aaa;text-align:center;margin-bottom:8px;">※白背景優先で選択しています</div>` : ''}
   <button class="sns-btn" style="margin-top:8px;background:#1a1a2e;border-color:#4CAF50;color:#4CAF50;" onclick="cpChatGPT(this)">📋 ChatGPT用データをコピー</button>
