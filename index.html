@@ -265,7 +265,8 @@ function card(item, rank, sc) {
     : `<div class="pimg-ph">🎁</div>`;
   const q = QUOTES[Math.min(Math.floor(avg-3), QUOTES.length-1)] || QUOTES[0];
 
-  return `<div class="card">
+  const chatData = `【${rank}位】\n商品名（楽天表記）：${item.itemName.substring(0,40)}\n価格：¥${price.toLocaleString()}前後（税込）\n口コミ：${q}\nポイント：${point(item)}\n検索ワード：${kw}\n商品画像：[添付してください]\n\n※商品名は10文字以内に変換してください\n※商品画像のテキスト・バナーは無視して商品本体のみ参考にしてください`;
+  return `<div class="card" data-chatgpt="${encodeURIComponent(chatData)}">
   <div class="card-head">
     <div class="badge b${rank}">${rank}</div>
     <div class="card-title-area">
@@ -287,7 +288,7 @@ function card(item, rank, sc) {
       <span class="score-val">${sn}</span>
     </div>
     <div class="point-box">💡 ${point(item)}</div>
-  <div class="quote">${q}</div>
+    <div class="quote">${q}</div>
     <div class="kw-lbl">📋 楽天検索キーワード（コピペ用）</div>
     <div class="kw-box">
       <span class="kw-text">${kw}</span>
@@ -304,18 +305,8 @@ function card(item, rank, sc) {
     <div style="text-align:center;margin:6px 0 4px;">
       <img src="${bestImg||medImg}" style="max-width:100%;max-height:220px;object-fit:contain;border-radius:8px;border:1px solid #e8e0d4;background:#f9f5ee;" alt="商品画像" onerror="this.style.display='none'">
     </div>
-    <div style="font-size:10px;color:#aaa;text-align:center;margin-bottom:8px;">※白背景優先で選択しています</div>     <button class="cp-btn" style="width:100%;margin-top:6px;background:#1a1a2e;color:#4CAF50;border-color:#4CAF50;" onclick="cp(\`【${rank}位】
-商品名（楽天表記）：${item.itemName.substring(0,40)}
-価格：¥${price.toLocaleString()}前後（税込）
-口コミ：${q}
-口コミ②：${}
-ポイント：${point(item)}
-検索ワード：${keyword(item)}
-商品画像：[添付してください]
-
-※商品名は10文字以内で簡潔な名前に変換してから画像に使用してください
-※商品画像内のテキスト・バナー・ポイント表記は無視して商品本体のみを参考にしてください
-※商品画像内のテキスト・バナー・ポイント表記は無視して商品本体のみを参考にしてください\`,this)">📋 ChatGPT用データをコピー</button</div>` : ''}
+    <div style="font-size:10px;color:#aaa;text-align:center;margin-bottom:8px;">※白背景優先で選択しています</div>` : ''}
+  <button class="sns-btn" style="margin-top:8px;background:#1a1a2e;border-color:#4CAF50;color:#4CAF50;" onclick="cpChatGPT(this)">📋 ChatGPT用データをコピー</button>
   </div>
 </div>`;
 }
@@ -360,7 +351,8 @@ async function run() {
       .map(i=>({item:i,sc:score(i,minAvg,minCnt)}))
       .filter(x=>x.sc>0)
       .sort((a,b)=>b.sc-a.sc)
-      .filter((x,i,self)=>self.findIndex(y=>y.item.shopCode===x.item.shopCode)===i).slice(0,5);
+      .filter((x,i,self)=>self.findIndex(y=>y.item.shopCode===x.item.shopCode)===i)
+      .slice(0,5);
 
     if (scored.length<2) throw new Error(`バリデーション通過が${scored.length}件のみです。最低評価・レビュー数の条件を緩めてください。`);
 
@@ -385,6 +377,13 @@ async function run() {
     area.innerHTML = `<div class="empty">⚠️ ${e.message}</div>`;
   }
   btn.disabled=false; btn.textContent='▶ 楽天APIで実商品ランキングを生成';
+}
+
+function cpChatGPT(btn) {
+  const card = btn.closest('[data-chatgpt]');
+  if (!card) return;
+  const text = decodeURIComponent(card.getAttribute('data-chatgpt'));
+  cp(text, btn);
 }
 
 function cp(text, btn) {
