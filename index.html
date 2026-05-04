@@ -266,7 +266,9 @@ function card(item, rank, sc) {
   const q = QUOTES[Math.min(Math.floor(avg-3), QUOTES.length-1)] || QUOTES[0];
 
   const chatData = `【${rank}位】\n商品名（楽天表記）：${item.itemName.substring(0,40)}\n価格：¥${price.toLocaleString()}前後（税込）\n口コミ：${q}\nポイント：${point(item)}\n検索ワード：${kw}\n商品画像：[添付してください]\n\n※商品名は10文字以内に変換してください\n※商品画像のテキスト・バナーは無視して商品本体のみ参考にしてください`;
-  return `<div class="card" data-chatgpt="${encodeURIComponent(chatData)}">
+  const genreLabel = document.getElementById("genre").options[document.getElementById("genre").selectedIndex].text;
+  const roomData = JSON.stringify({genre:genreLabel,name:keyword(item),catch_:genCatch(item),features:genFeatures(item),tags:genTags(item)});
+  return `<div class="card" data-chatgpt="${encodeURIComponent(chatData)}" data-room="${encodeURIComponent(roomData)}">
   <div class="card-head">
     <div class="badge b${rank}">${rank}</div>
     <div class="card-title-area">
@@ -306,7 +308,7 @@ function card(item, rank, sc) {
       <img src="${bestImg||medImg}" style="max-width:100%;max-height:220px;object-fit:contain;border-radius:8px;border:1px solid #e8e0d4;background:#f9f5ee;" alt="商品画像" onerror="this.style.display='none'">
     </div>
     <div style="font-size:10px;color:#aaa;text-align:center;margin-bottom:8px;">※白背景優先で選択しています</div>` : ''}
-  <button class="sns-btn" style="margin-top:8px;background:#1a1a2e;border-color:#4CAF50;color:#4CAF50;" onclick="cpChatGPT(this)">📋 ChatGPT用データをコピー</button>     <button class="sns-btn" style="margin-top:8px;background:#2d1a2e;border-color:#E91E8C;color:#E91E8C;" onclick="cpRoom(this)">📝 楽天ルーム用説明文をコピー</button</button>
+  <button class="sns-btn" style="margin-top:8px;background:#1a1a2e;border-color:#4CAF50;color:#4CAF50;" onclick="cpChatGPT(this)">📋 ChatGPT用データをコピー</button>
   </div>
 </div>`;
 }
@@ -377,6 +379,50 @@ async function run() {
     area.innerHTML = `<div class="empty">⚠️ ${e.message}</div>`;
   }
   btn.disabled=false; btn.textContent='▶ 楽天APIで実商品ランキングを生成';
+}
+
+
+function genFeatures(item) {
+  const n = item.itemName;
+  if (n.includes('花')||n.includes('フラワー')) return '・枯れないから長く楽しめる\n・お手入れ不要で飾りっぱなしOK\n・高見えするのにコスパ抜群';
+  if (n.includes('スイーツ')||n.includes('お菓子')||n.includes('プリン')||n.includes('ケーキ')) return '・上品な甘さで年代を選ばない\n・そのまま渡せる豪華な見た目\n・食べ物だから気を使わせない';
+  if (n.includes('お茶漬け')||n.includes('海鮮')||n.includes('グルメ')||n.includes('だし')) return '・自宅で料亭気分が味わえる\n・普段自分では買わない贅沢品\n・食べ物だから気を使わせない';
+  if (n.includes('コスメ')||n.includes('クリーム')||n.includes('スキンケア')||n.includes('美容')) return '・乾燥が気になる世代に刺さる\n・上品な香りで開けた瞬間に喜ばれる\n・高級感があって自分では買わない';
+  if (n.includes('入浴')||n.includes('バス')||n.includes('アロマ')) return '・お風呂がスパのような時間に\n・香りが上品で癒し効果抜群\n・疲れたお母さんへの最高の贈り物';
+  if (n.includes('タオル')) return '・驚くほど軽くて柔らかい\n・自分では買わない究極の1枚\n・毎日使うものだから絶対喜ばれる';
+  if (n.includes('紅茶')||n.includes('ティー')||n.includes('お茶')) return '・上品な香りでほっと一息つける\n・老舗ブランドで信頼感がある\n・日常をちょっと豊かにする贈り物';
+  return '・自分では買わない特別な一品\n・高見えするのにコスパ抜群\n・大人女性に刺さる上品な贈り物';
+}
+
+function genCatch(item) {
+  const n = item.itemName;
+  if (n.includes('花')||n.includes('フラワー')) return '枯れないお花で\nいつまでも喜ばれる特別なギフト🌸';
+  if (n.includes('スイーツ')||n.includes('お菓子')||n.includes('プリン')) return '上品な甘さが\n心をほぐす至福のスイーツギフト🍮';
+  if (n.includes('お茶漬け')||n.includes('海鮮')) return '自宅で料亭気分\n贅沢な一杯を贈る本格グルメギフト🍱';
+  if (n.includes('コスメ')||n.includes('クリーム')) return '毎日のケアが\n特別な時間に変わる上質コスメギフト✨';
+  if (n.includes('入浴')||n.includes('バス')||n.includes('アロマ')) return 'お風呂がスパに変わる\n心からのリラックスを贈るギフト🛁';
+  if (n.includes('タオル')) return '驚くほど柔らかい\n自分では買わない究極の贈り物🎁';
+  return '大切なあの人へ\n喜ばれること間違いなしの上質ギフト🎁';
+}
+
+function genTags(item) {
+  const n = item.itemName;
+  let tags = '#母の日 #プレゼント #ギフト #楽天ルーム #プレゼント迷子救済隊 #女性へのプレゼント';
+  if (n.includes('花')||n.includes('フラワー')) return tags + ' #フラワーギフト #プリザーブドフラワー';
+  if (n.includes('スイーツ')||n.includes('お菓子')) return tags + ' #スイーツギフト #お菓子ギフト';
+  if (n.includes('コスメ')||n.includes('クリーム')) return tags + ' #コスメギフト #スキンケアギフト';
+  if (n.includes('入浴')||n.includes('バス')) return tags + ' #バスギフト #リラックスギフト';
+  if (n.includes('グルメ')||n.includes('お茶漬け')||n.includes('海鮮')) return tags + ' #グルメギフト #食べ物ギフト';
+  if (n.includes('紅茶')||n.includes('ティー')) return tags + ' #紅茶ギフト #お茶ギフト';
+  return tags + ' #おすすめギフト #センスいいギフト';
+}
+
+function cpRoom(btn) {
+  const card = btn.closest('[data-room]');
+  if (!card) return;
+  const data = JSON.parse(decodeURIComponent(card.getAttribute('data-room')));
+  const text = `🌸 ${data.genre}に贈りたい！\n${data.name}\n\n${data.catch_}\n\n✨ 喜ばれるポイント\n${data.features}\n\n${data.tags}`;
+  cp(text, btn);
 }
 
 function cpChatGPT(btn) {
