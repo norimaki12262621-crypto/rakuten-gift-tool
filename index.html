@@ -304,7 +304,13 @@ function card(item, rank, sc) {
     <div style="text-align:center;margin:6px 0 4px;">
       <img src="${bestImg||medImg}" style="max-width:100%;max-height:220px;object-fit:contain;border-radius:8px;border:1px solid #e8e0d4;background:#f9f5ee;" alt="商品画像" onerror="this.style.display='none'">
     </div>
-    <div style="font-size:10px;color:#aaa;text-align:center;margin-bottom:8px;">※白背景優先で選択しています</div>` : ''}
+    <div style="font-size:10px;color:#aaa;text-align:center;margin-bottom:8px;">※白背景優先で選択しています</div>     <button class="cp-btn" style="width:100%;margin-top:6px;background:#1a1a2e;color:#4CAF50;border-color:#4CAF50;" onclick="cp(\`【${rank}位】
+商品名：${item.itemName.substring(0,25)}
+価格：¥${price.toLocaleString()}前後（税込）
+口コミ：${q}
+ポイント：${point(item)}
+検索ワード：${keyword(item)}
+商品画像：[添付してください]\`,this)">📋 ChatGPT用データをコピー</button</div>` : ''}
   </div>
 </div>`;
 }
