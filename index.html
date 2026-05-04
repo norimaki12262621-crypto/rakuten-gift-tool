@@ -337,7 +337,7 @@ async function run() {
 
     const scored = items
       .map(i=>({item:i,sc:score(i,minAvg,minCnt)}))
-      .filter(x=>x.sc>0)
+      .filter(x=>x.sc>0).filter((x,i,arr)=>arr.findIndex(y=>y.item.itemName.substring(0,15)===x.item.itemName.substring(0,15))===i)
       .sort((a,b)=>b.sc-a.sc)
       .slice(0,5);
 
