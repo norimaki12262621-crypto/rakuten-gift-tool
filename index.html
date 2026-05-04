@@ -244,8 +244,8 @@ function score(item, minAvg, minCnt) {
   const price = parseInt(item.itemPrice)||0;
   if (price>=3000&&price<=7000) s+=15;
   const gkws = ['ギフト','プレゼント','贈り物','セット','母の日','ボックス'];
-  for (const kw of gkws) if (item.itemName.includes(kw)||(item.itemCaption&&item.itemCaption.includes(kw))) { s+=5; break; }
-  if (item.itemCaption&&item.itemCaption.includes('送料無料')) s+=5;
+for (const kw of gkws) if (item.itemName.includes(kw)||(item.itemCaption&&item.itemCaption.includes(kw))) { s+=5; break; }
+if (item.itemCaption&&item.itemCaption.includes('送料無料')) s+=5;
   return Math.round(s);
 }
 
