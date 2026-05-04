@@ -332,7 +332,7 @@ async function run() {
     const data = await res.json();
     if (data.error) throw new Error(data.error_description||data.error);
 
-    const items = data.Items||[];
+    const rawItems = data.Items||[];const items = rawItems.map(i => i.Item || i);
     if (!items.length) throw new Error('該当商品がありません。条件を変えてください。');
 
     const scored = items
