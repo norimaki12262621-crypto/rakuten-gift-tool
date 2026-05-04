@@ -291,7 +291,7 @@ function card(item, rank, sc) {
       <button class="cp-btn" onclick="cp('${kw.replace(/'/g,"\\'")}',this)">コピー</button>
     </div>
     <div class="hint">🔍 「${item.shopName?item.shopName.substring(0,12):''}」を出品ショップで絞り込み / 価格：¥${price.toLocaleString()}付近</div>
-    <div class="kw-lbl">🔗 アフィリエイトURL（楽天ルーム用）</div>
+    <div class="kw-lbl">🖼️ 商品画像（長押しで保存→ChatGPTに添付）</div><div style="margin-bottom:10px;text-align:center;"><img src="${medImg||''}" style="max-width:100%;border-radius:8px;border:1px solid #ddd;" alt="商品画像"></div><div class="kw-lbl">🖼️ 商品画像（長押しで保存→ChatGPTに添付）</div><div style="margin-bottom:10px;text-align:center;"><img src="${medImg||''}" style="max-width:100%;border-radius:8px;border:1px solid #ddd;" alt="商品画像"></div><div class="kw-lbl">🔗 アフィリエイトURL（楽天ルーム用）</div>
     <div class="kw-box">
       <span class="kw-text aff-url">${aff.substring(0,55)}...</span>
       <button class="cp-btn" onclick="cp('${aff.replace(/'/g,"\\'")}',this)">コピー</button>
