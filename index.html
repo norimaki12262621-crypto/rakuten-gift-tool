@@ -232,7 +232,7 @@ textarea { width: 100%; height: 340px; font-size: 12px; font-family: monospace; 
 <script>
 const APP_ID = '9a9bb16b-a393-414a-ad63-ea58ecf01daa';
 const AFF_ID = '534cdfaf.e35a1702.534cdfb0.c0ce9a58';
-const EXCLUDE = ['洗剤','掃除','電気','テレビ','パソコン','家電','充電','ケーブル','帽子','日傘','サングラス','ウェア','アウター','服','ジャケット','パンツ','スカート','シャツ','レギンス','ラッシュガード'];
+const EXCLUDE = ['洗剤','掃除','テレビ','パソコン','ケーブル'];
 const QUOTES = ['「母に贈ったら大喜びでした」','「箱もきれいでそのまま渡せた」','「思ったより高見えしてびっくり」','「毎年リピートしています」','「上品な香りで喜んでもらえました」','「ギフト包装が丁寧で感動しました」'];
 const ICONS = ['','🥇','🥈','🥉','4️⃣','5️⃣'];
 let ranking = [];
@@ -375,7 +375,8 @@ async function run() {
   const stats = document.getElementById('stats');
   const area = document.getElementById('area');
   const genre = document.getElementById('genre').value;
-  const [minP,maxP] = document.getElementById('price').value.split(':');
+ const minP = document.getElementById('priceMin').value || 1;
+const maxP = document.getElementById('priceMax').value || 999999;
   const sort = document.getElementById('sort').value;
   const minAvg = document.getElementById('minAvg').value;
   const minCnt = document.getElementById('minCnt').value;
