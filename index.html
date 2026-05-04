@@ -418,11 +418,15 @@ function genTags(item) {
 }
 
 function cpRoom(btn) {
-  const card = btn.closest('[data-room]');
-  if (!card) return;
-  const data = JSON.parse(decodeURIComponent(card.getAttribute('data-room')));
-  const text = `🌸 ${data.genre}に贈りたい！\n${data.name}\n\n${data.catch_}\n\n✨ 喜ばれるポイント\n${data.features}\n\n${data.tags}`;
-  cp(text, btn);
+  const card = btn.closest('div[data-room]');
+  if (!card) { alert('エラー：データが見つかりません'); return; }
+  const raw = card.getAttribute('data-room');
+  if (!raw) { alert('エラー：data-roomがありません'); return; }
+  try {
+    const data = JSON.parse(decodeURIComponent(raw));
+    const text = `🌸 ${data.genre}に贈りたい！\n${data.name}\n\n${data.catch_}\n\n✨ 喜ばれるポイント\n${data.features}\n\n${data.tags}`;
+    cp(text, btn);
+  } catch(e) { alert('エラー：' + e.message); }
 }
 
 function cpChatGPT(btn) {
