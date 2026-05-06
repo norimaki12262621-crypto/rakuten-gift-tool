@@ -402,75 +402,34 @@ const res2 = await fetch(`/api/rakuten?${params2}`);
 const data2 = res2.ok ? await res2.json() : {Items:[]};
 
 const rawItems = [...(data1.Items||[]), ...(data2.Items||[])];
-    const items = rawItems.map(i => i.Item || i);
-    if (!items.length) throw new Error('該当商品がありません。条件を変えてください。');
+ function cpX(btn) {
+  const card = btn.closest('[data-chatgpt]');
+  if (!card) return;
+  const raw = decodeURIComponent(card.getAttribute('data-chatgpt'));
+  const lines = raw.split('\n');
+  const nameLine = lines.find(l => l.includes('商品名')) || '';
+  const name = nameLine.replace('商品名（楽天表記）：','').trim().substring(0,20);
+  const priceLine = lines.find(l => l.includes('価格')) || '';
+  const price = priceLine.replace('価格：','').trim();
+  const affEl = card.querySelector('.aff-url');
+  const aff = affEl ? affEl.textContent.replace('...','') : '';
+  const n = name;
 
-    const scored = items
-      .map(i=>({item:i,sc:score(i,minAvg,minCnt)}))
-      .filter(x=>x.sc>0)
-      .sort((a,b)=>b.sc-a.sc)
-      .filter((x,i,self)=>self.findIndex(y=>y.item.shopCode===x.item.shopCode)===i)
-      .slice(0,5);
+  let hook = '';
+  if (n.includes('日傘')||n.includes('晴雨')) hook = '未来のシミ、作りたくない。🌂';
+  else if (n.includes('日焼け止め')||n.includes('UVクリーム')||n.includes('サンスクリーン')) hook = '塗らないと、負ける。☀️';
+  else if (n.includes('帽子')||n.includes('ハット')) hook = '頭から、老ける。🧢';
+  else if (n.includes('化粧水')||n.includes('ローション')) hook = '10年後の肌、今日決まる。✨';
+  else if (n.includes('美容液')||n.includes('セラム')) hook = 'スキンケア、まだ妥協してる？✨';
+  else if (n.includes('冷感')||n.includes('ひんやり')) hook = 'この夏、暑さで消耗しないために。❄️';
+  else if (n.includes('アイス')||n.includes('かき氷')) hook = '暑い日のご褒美、これ以外考えられない。🍧';
+  else if (n.includes('虫除け')||n.includes('虫よけ')) hook = '刺されてから後悔しても遅い。🦟';
+  else if (n.includes('サングラス')) hook = '目元から、紫外線にやられてる。🕶️';
+  else if (n.includes('扇風機')||n.includes('サーキュレーター')) hook = 'エアコンだけじゃ、もったいない。🌀';
+  else hook = 'これ知らないの、損してるよ。🎁';
 
-    if (scored.length<2) throw new Error(`バリデーション通過が${scored.length}件のみです。最低評価・レビュー数の条件を緩めてください。`);
-
-    ranking = scored;
-    const avgSc = Math.round(scored.reduce((s,x)=>s+x.sc,0)/scored.length);
-    const avgPr = Math.round(scored.reduce((s,x)=>s+parseInt(x.item.itemPrice),0)/scored.length);
-    document.getElementById('sTotal').textContent = items.length;
-    document.getElementById('sValid').textContent = scored.length;
-    document.getElementById('sScore').textContent = avgSc;
-    document.getElementById('sPrice').textContent = '¥'+avgPr.toLocaleString();
-    stats.classList.add('on');
-
-    const rev = [...scored].reverse();
-    let html = `<div class="sec-title">SNS用 ギフトランキング TOP${scored.length}</div>`;
-    rev.forEach((x,i)=>{ html += card(x.item, scored.length-i, x.sc); });
-    html += `<button class="sns-btn" onclick="openModal()">📱 SNS投稿テキストを一括生成</button>`;
-    area.innerHTML = html;
-
-  } catch(e) {
-    err.textContent = '⚠️ '+e.message;
-    err.classList.add('on');
-    area.innerHTML = `<div class="empty">⚠️ ${e.message}</div>`;
-  }
-  btn.disabled=false; btn.textContent='▶ 楽天APIで実商品ランキングを生成';
-}
-
-
-function genFeatures(item) {
-  const n = item.itemName;
-  if (n.includes('花')||n.includes('フラワー')) return '・枯れないから長く楽しめる\n・お手入れ不要で飾りっぱなしOK\n・高見えするのにコスパ抜群';
-  if (n.includes('スイーツ')||n.includes('お菓子')||n.includes('プリン')||n.includes('ケーキ')) return '・上品な甘さで年代を選ばない\n・そのまま渡せる豪華な見た目\n・食べ物だから気を使わせない';
-  if (n.includes('お茶漬け')||n.includes('海鮮')||n.includes('グルメ')||n.includes('だし')) return '・自宅で料亭気分が味わえる\n・普段自分では買わない贅沢品\n・食べ物だから気を使わせない';
-  if (n.includes('コスメ')||n.includes('クリーム')||n.includes('スキンケア')||n.includes('美容')) return '・乾燥が気になる世代に刺さる\n・上品な香りで開けた瞬間に喜ばれる\n・高級感があって自分では買わない';
-  if (n.includes('入浴')||n.includes('バス')||n.includes('アロマ')) return '・お風呂がスパのような時間に\n・香りが上品で癒し効果抜群\n・疲れたお母さんへの最高の贈り物';
-  if (n.includes('タオル')) return '・驚くほど軽くて柔らかい\n・自分では買わない究極の1枚\n・毎日使うものだから絶対喜ばれる';
-  if (n.includes('紅茶')||n.includes('ティー')||n.includes('お茶')) return '・上品な香りでほっと一息つける\n・老舗ブランドで信頼感がある\n・日常をちょっと豊かにする贈り物';
-  return '・自分では買わない特別な一品\n・高見えするのにコスパ抜群\n・大人女性に刺さる上品な贈り物';
-}
-
-function genCatch(item) {
-  const n = item.itemName;
-  if (n.includes('花')||n.includes('フラワー')) return '枯れないお花で\nいつまでも喜ばれる特別なギフト🌸';
-  if (n.includes('スイーツ')||n.includes('お菓子')||n.includes('プリン')) return '上品な甘さが\n心をほぐす至福のスイーツギフト🍮';
-  if (n.includes('お茶漬け')||n.includes('海鮮')) return '自宅で料亭気分\n贅沢な一杯を贈る本格グルメギフト🍱';
-  if (n.includes('コスメ')||n.includes('クリーム')) return '毎日のケアが\n特別な時間に変わる上質コスメギフト✨';
-  if (n.includes('入浴')||n.includes('バス')||n.includes('アロマ')) return 'お風呂がスパに変わる\n心からのリラックスを贈るギフト🛁';
-  if (n.includes('タオル')) return '驚くほど柔らかい\n自分では買わない究極の贈り物🎁';
-  return '大切なあの人へ\n喜ばれること間違いなしの上質ギフト🎁';
-}
-
-function genTags(item) {
-  const n = item.itemName;
-  let tags = '#母の日 #プレゼント #ギフト #楽天ルーム #プレゼント迷子救済隊 #女性へのプレゼント';
-  if (n.includes('花')||n.includes('フラワー')) return tags + ' #フラワーギフト #プリザーブドフラワー';
-  if (n.includes('スイーツ')||n.includes('お菓子')) return tags + ' #スイーツギフト #お菓子ギフト';
-  if (n.includes('コスメ')||n.includes('クリーム')) return tags + ' #コスメギフト #スキンケアギフト';
-  if (n.includes('入浴')||n.includes('バス')) return tags + ' #バスギフト #リラックスギフト';
-  if (n.includes('グルメ')||n.includes('お茶漬け')||n.includes('海鮮')) return tags + ' #グルメギフト #食べ物ギフト';
-  if (n.includes('紅茶')||n.includes('ティー')) return tags + ' #紅茶ギフト #お茶ギフト';
-  return tags + ' #おすすめギフト #センスいいギフト';
+  const text = `${hook}\n\n${name}\n${price}\n\n楽天で詳細を見る👇\n${aff}\n\n#楽天 #楽天ルーム #プレゼント迷子救済隊 #PR`;
+  cp(text, btn);
 }
 function cpX(btn) {
   const card = btn.closest('[data-chatgpt]');
