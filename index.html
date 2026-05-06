@@ -334,7 +334,7 @@ function card(item, rank, sc) {
     </div>
     <div style="font-size:10px;color:#aaa;text-align:center;margin-bottom:8px;">※白背景優先で選択しています</div>` : ''}
   <button class="sns-btn" style="margin-top:8px;background:#1a1a2e;border-color:#4CAF50;color:#4CAF50;" onclick="cpChatGPT(this)">📋 ChatGPT用データをコピー</button>
-  </</div><button class="sns-btn" style="margin-top:6px;background:#1a1a2e;border-color:#C9A84C;color:#C9A84C;" onclick="cpRoom(this)">🛍 楽天ルーム用説明文をコピー</button>
+ <button class="sns-btn" style="margin-top:6px;background:#1a1a2e;border-color:#1DA1F2;color:#1DA1F2;" onclick="cpX(this)">𝕏 X投稿文をコピー</button> </</div><button class="sns-btn" style="margin-top:6px;background:#1a1a2e;border-color:#C9A84C;color:#C9A84C;" onclick="cpRoom(this)">🛍 楽天ルーム用説明文をコピー</button>
 </div>`;
 313
 314
@@ -472,7 +472,35 @@ function genTags(item) {
   if (n.includes('紅茶')||n.includes('ティー')) return tags + ' #紅茶ギフト #お茶ギフト';
   return tags + ' #おすすめギフト #センスいいギフト';
 }
+function cpX(btn) {
+  const card = btn.closest('[data-chatgpt]');
+  if (!card) return;
+  const raw = decodeURIComponent(card.getAttribute('data-chatgpt'));
+  const lines = raw.split('\n');
+  const name = (lines[0]||'').replace('【','').replace('】','').replace(/\d+位/,'').trim();
+  const priceLine = lines.find(l=>l.includes('価格')) || '';
+  const price = priceLine.replace('価格：','').trim();
+  const aff = decodeURIComponent(card.getAttribute('data-chatgpt')).split('アフィリエイト')[0];
+  const affCard = btn.closest('[data-room]');
+  const n = name;
+  
+  // 1行目フック（商品カテゴリ別）
+  let hook = '';
+  if (n.includes('日傘')||n.includes('晴雨')) hook = '未来のシミ、作りたくない。🌂';
+  else if (n.includes('日焼け止め')||n.includes('UVクリーム')||n.includes('サンスクリーン')) hook = '塗らないと、負ける。☀️';
+  else if (n.includes('帽子')||n.includes('ハット')) hook = '頭から、老ける。🧢';
+  else if (n.includes('化粧水')||n.includes('ローション')) hook = '10年後の肌、今日決まる。✨';
+  else if (n.includes('美容液')||n.includes('セラム')) hook = 'スキンケア、まだ妥協してる？✨';
+  else if (n.includes('冷感')||n.includes('ひんやり')) hook = 'この夏、暑さで消耗しないために。❄️';
+  else if (n.includes('アイス')||n.includes('かき氷')) hook = '暑い日のご褒美、これ以外考えられない。🍧';
+  else if (n.includes('虫除け')||n.includes('虫よけ')) hook = '刺されてから後悔しても遅い。🦟';
+  else if (n.includes('サングラス')) hook = '目元から、紫外線にやられてる。🕶️';
+  else if (n.includes('扇風機')||n.includes('サーキュレーター')) hook = 'エアコンだけじゃ、もったいない。🌀';
+  else hook = 'これ知らないの、損してるよ。🎁';
 
+  const text = `${hook}\n\n${name.substring(0,20)}\n${price}\n\n楽天で詳細を見る👇\nhttps://hb.afl.rakuten.co.jp/\n\n#楽天 #楽天ルーム #プレゼント迷子救済隊`;
+  cp(text, btn);
+}
 function cpRoom(btn) {
   const card = btn.closest('div[data-room]');
   if (!card) { alert('エラー：データが見つかりません'); return; }
