@@ -287,7 +287,7 @@ function card(item, rank, sc) {
   const imgHtml = medImg
     ? `<img class="pimg" src="${medImg}" alt="" loading="lazy" onerror="this.style.display='none'">`
     : `<div class="pimg-ph">🎁</div>`;
-  const q = QUOTES[Math.min(Math.floor(avg-3), QUOTES.length-1)] || QUOTES[0];
+  const q = ''; QUOTES[Math.min(Math.floor(avg-3), QUOTES.length-1)] || QUOTES[0];
 
   const chatData = `【${rank}位】\n商品名（楽天表記）：${item.itemName.substring(0,40)}\n価格：¥${price.toLocaleString()}前後（税込）\n口コミ：${q}\nポイント：${point(item)}\n検索ワード：${kw}\n商品画像：[添付してください]\n\n※商品名は10文字以内に変換してください\n※商品画像のテキスト・バナーは無視して商品本体のみ参考にしてください`;
   const genreLabel = document.getElementById("genre").options[document.getElementById("genre").selectedIndex].text;
