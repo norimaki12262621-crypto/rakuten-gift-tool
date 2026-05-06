@@ -477,14 +477,14 @@ function cpX(btn) {
   if (!card) return;
   const raw = decodeURIComponent(card.getAttribute('data-chatgpt'));
   const lines = raw.split('\n');
-  const name = (lines[0]||'').replace('【','').replace('】','').replace(/\d+位/,'').trim();
-  const priceLine = lines.find(l=>l.includes('価格')) || '';
+  const nameLine = lines.find(l => l.includes('商品名')) || '';
+  const name = nameLine.replace('商品名（楽天表記）：','').trim().substring(0,20);
+  const priceLine = lines.find(l => l.includes('価格')) || '';
   const price = priceLine.replace('価格：','').trim();
-  const aff = decodeURIComponent(card.getAttribute('data-chatgpt')).split('アフィリエイト')[0];
-  const affCard = btn.closest('[data-room]');
+  const affEl = card.querySelector('.aff-url');
+  const aff = affEl ? affEl.textContent.replace('...','') : '';
   const n = name;
-  
-  // 1行目フック（商品カテゴリ別）
+
   let hook = '';
   if (n.includes('日傘')||n.includes('晴雨')) hook = '未来のシミ、作りたくない。🌂';
   else if (n.includes('日焼け止め')||n.includes('UVクリーム')||n.includes('サンスクリーン')) hook = '塗らないと、負ける。☀️';
@@ -496,11 +496,7 @@ function cpX(btn) {
   else if (n.includes('虫除け')||n.includes('虫よけ')) hook = '刺されてから後悔しても遅い。🦟';
   else if (n.includes('サングラス')) hook = '目元から、紫外線にやられてる。🕶️';
   else if (n.includes('扇風機')||n.includes('サーキュレーター')) hook = 'エアコンだけじゃ、もったいない。🌀';
-  else hook = 'これ知らないの、損してるよ。🎁';
-
-  const text = `${hook}\n\n${name.substring(0,20)}\n${price}\n\n楽天で詳細を見る👇\nhttps://hb.afl.rakuten.co.jp/\n\n#楽天 #楽天ルーム #プレゼント迷子救済隊`;
-  cp(text, btn);
-}
+  e
 function cpRoom(btn) {
   const card = btn.closest('div[data-room]');
   if (!card) { alert('エラー：データが見つかりません'); return; }
