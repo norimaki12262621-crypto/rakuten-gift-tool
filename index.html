@@ -317,22 +317,37 @@ function point(item) {
 }
 
 function genCatch(item) {
-  const n = item.itemName;
-  if (n.includes('花')||n.includes('フラワー')) return '枯れないお花で\nいつまでも喜ばれる特別なギフト🌸';
-  if (n.includes('スイーツ')||n.includes('お菓子')||n.includes('プリン')) return '上品な甘さが\n心をほぐす至福のスイーツギフト🍮';
-  if (n.includes('コスメ')||n.includes('クリーム')) return '毎日のケアが\n特別な時間に変わる上質コスメギフト✨';
-  if (n.includes('入浴')||n.includes('バス')||n.includes('アロマ')) return 'お風呂がスパに変わる\n心からのリラックスを贈るギフト🛁';
-  if (n.includes('タオル')) return '驚くほど柔らかい\n自分では買わない究極の贈り物🎁';
-  return '大切なあの人へ\n喜ばれること間違いなしの上質ギフト🎁';
+  const avg = parseFloat(item.reviewAverage) || 0;
+  const cnt = parseInt(item.reviewCount) || 0;
+  const price = parseInt(item.itemPrice) || 0;
+  if (avg >= 4.7 && cnt >= 100) return `口コミ${cnt.toLocaleString()}件で評価${avg.toFixed(1)}！\nリアルな購入者が絶賛する本物のクオリティ✨`;
+  if (avg >= 4.5 && cnt >= 50) return `★${avg.toFixed(1)}の高評価を${cnt.toLocaleString()}件獲得！\n使って実感する品質の高さが選ばれ続ける理由⭐`;
+  if (cnt >= 500) return `レビュー${cnt.toLocaleString()}件超えの大ヒット商品！\nこれだけ選ばれるのには理由がある🏆`;
+  if (cnt >= 100) return `${cnt.toLocaleString()}件の口コミが証明する信頼の品質！\n実際に使った人の声が背中を押してくれる💡`;
+  if (price <= 3000) return `¥${price.toLocaleString()}でこの品質はコスパが異常すぎる💰\n価格を忘れさせるクオリティに驚く人続出`;
+  return `品質を考えると¥${price.toLocaleString()}は実は安い。\n使えばわかる納得の価値がここにある✨`;
 }
 
 function genFeatures(item) {
+  const avg = parseFloat(item.reviewAverage) || 0;
+  const cnt = parseInt(item.reviewCount) || 0;
+  const price = parseInt(item.itemPrice) || 0;
   const n = item.itemName;
-  if (n.includes('花')||n.includes('フラワー')) return '・枯れないから長く楽しめる\n・お手入れ不要で飾りっぱなしOK\n・高見えするのにコスパ抜群';
-  if (n.includes('スイーツ')||n.includes('お菓子')) return '・上品な甘さで年代を選ばない\n・そのまま渡せる豪華な見た目\n・食べ物だから気を使わせない';
-  if (n.includes('コスメ')||n.includes('クリーム')) return '・乾燥が気になる世代に刺さる\n・上品な香りで開けた瞬間に喜ばれる\n・高級感があって自分では買わない';
-  if (n.includes('入浴')||n.includes('バス')||n.includes('アロマ')) return '・お風呂がスパのような時間に\n・香りが上品で癒し効果抜群\n・疲れた体への最高の贈り物';
-  return '・自分では買わない特別な一品\n・高見えするのにコスパ抜群\n・大人に刺さる上品な贈り物';
+  const lines = [];
+  if (avg >= 4.5) lines.push(`・評価${avg.toFixed(1)}／5.0 — 実際の購入者がほぼ全員満足`);
+  else if (avg >= 4.0) lines.push(`・評価${avg.toFixed(1)}の高評価 — 使って納得するクオリティ`);
+  if (cnt >= 500) lines.push(`・レビュー${cnt.toLocaleString()}件超えが証明する圧倒的な人気`);
+  else if (cnt >= 100) lines.push(`・${cnt.toLocaleString()}件の口コミで品質が証明済み`);
+  else if (cnt >= 20) lines.push(`・${cnt.toLocaleString()}件のリアルな購入者レビューあり`);
+  if (price <= 2000) lines.push(`・¥${price.toLocaleString()}で買えるとは思えないクオリティ`);
+  else if (price <= 4000) lines.push(`・¥${price.toLocaleString()}でコスパ最強クラスの満足度`);
+  else lines.push(`・品質を考えると¥${price.toLocaleString()}は妥当。むしろお得`);
+  if (n.includes('花')||n.includes('フラワー')) lines.push('・見た目のインパクトが大きく、長期間楽しめる');
+  else if (n.includes('スイーツ')||n.includes('お菓子')) lines.push('・美味しさと豪華な見た目で開封の瞬間から喜ばれる');
+  else if (n.includes('コスメ')||n.includes('クリーム')) lines.push('・使い続けると実感できる変化が口コミでも高評価');
+  else if (n.includes('入浴')||n.includes('バス')||n.includes('アロマ')) lines.push('・毎日のバスタイムが別格のリラックスタイムに変わる');
+  else lines.push('・品質と価格のバランスが絶妙で満足度が高い');
+  return lines.join('\n');
 }
 
 function genTags(item) {
@@ -529,7 +544,7 @@ function cpRoom(btn) {
   if (!raw) { alert('エラー：data-roomがありません'); return; }
   try {
     const data = JSON.parse(decodeURIComponent(raw));
-    const text = `🌸 ${data.genre}に贈りたい！\n${data.name}\n\n${data.catch_}\n\n✨ 喜ばれるポイント\n${data.features}\n\n${data.tags}`;
+    const text = `📦 ${data.name}\n\n${data.catch_}\n\n✅ この商品が選ばれる理由\n${data.features}\n\n${data.tags}`;
     cp(text, btn);
   } catch(e) { alert('エラー：' + e.message); }
 }
