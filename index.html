@@ -122,6 +122,12 @@ select:focus { border-color: var(--gold); }
 .add-btn.added { background: #27AE60; }
 .add-btn:disabled { background: #aaa; cursor: not-allowed; }
 
+.card-ctrl { display: flex; justify-content: flex-end; align-items: center; gap: 6px; padding: 8px 14px 0; }
+.ctrl-btn { border: 1px solid #D9D3CA; border-radius: 5px; padding: 4px 10px; font-size: 12px; font-weight: 700; font-family: 'Zen Kaku Gothic New', sans-serif; cursor: pointer; background: var(--cream); color: var(--ink2); transition: all 0.15s; line-height: 1; }
+.ctrl-btn:hover { border-color: var(--gold); color: var(--ink); background: #fff; }
+.ctrl-del { border-color: #F5C6C6; color: var(--red-dark); background: #FEF5F5; }
+.ctrl-del:hover { background: var(--red); color: #fff; border-color: var(--red); }
+
 .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; overflow-y: auto; padding: 20px; }
 .modal-bg.on { display: block; }
 .modal { background: #fff; border-radius: 12px; max-width: 460px; margin: 0 auto; overflow: hidden; }
@@ -361,6 +367,11 @@ function card(item, rank, sc) {
   const roomData = JSON.stringify({genre:genreLabel,name:keyword(item),catch_:genCatch(item),features:genFeatures(item),tags:genTags(item)});
 
   return `<div class="card" data-chatgpt="${encodeURIComponent(chatData)}" data-room="${encodeURIComponent(roomData)}">
+  <div class="card-ctrl">
+    <button class="ctrl-btn" onclick="moveCard(this,'up')" title="上へ">↑</button>
+    <button class="ctrl-btn" onclick="moveCard(this,'down')" title="下へ">↓</button>
+    <button class="ctrl-btn ctrl-del" onclick="deleteCard(this)" title="削除">削除</button>
+  </div>
   <div class="card-head">
     <div class="badge b${rank}">${rank}</div>
     <div class="card-title-area">
@@ -562,6 +573,53 @@ function copyAll() {
   cp(t, document.querySelector('.copy-all'));
   document.querySelector('.copy-all').textContent='✓ コピーしました！';
   setTimeout(()=>{ document.querySelector('.copy-all').textContent='📋 全文コピー'; },2000);
+}
+
+function moveCard(btn, dir) {
+  const card = btn.closest('.card');
+  const area = document.getElementById('area');
+  const cards = [...area.querySelectorAll('.card')];
+  const idx = cards.indexOf(card);
+  if (dir === 'up' && idx > 0) {
+    area.insertBefore(card, cards[idx - 1]);
+  } else if (dir === 'down' && idx < cards.length - 1) {
+    cards[idx + 1].insertAdjacentElement('afterend', card);
+  }
+  updateRankBadges();
+}
+
+function deleteCard(btn) {
+  const card = btn.closest('.card');
+  card.remove();
+  ranking = ranking.filter((_, i) => i !== 0); // keep array length in sync
+  ranking.pop();
+  updateRankBadges();
+  const area = document.getElementById('area');
+  if (!area.querySelector('.card')) {
+    area.innerHTML = '<div class="empty"><div style="font-size:36px;margin-bottom:10px">🎁</div>条件を選んでボタンを押してください<br><small style="font-size:11px">楽天APIで実在商品のみ取得します</small></div>';
+  }
+}
+
+function updateRankBadges() {
+  const area = document.getElementById('area');
+  const cards = [...area.querySelectorAll('.card')];
+  const total = cards.length;
+  const badgeClasses = ['','b1','b2','b3','b4','b5'];
+  cards.forEach((card, i) => {
+    const rank = i + 1;
+    const badge = card.querySelector('.badge');
+    const rankLbl = card.querySelector('.rank-lbl');
+    if (badge) {
+      badge.textContent = rank;
+      badge.className = 'badge ' + (badgeClasses[rank] || 'b4');
+    }
+    if (rankLbl) {
+      const icon = ICONS[rank] || '';
+      const sc = rankLbl.textContent.match(/スコア(\d+)/);
+      const scVal = sc ? sc[1] : '';
+      rankLbl.textContent = `${icon} ${rank}位${scVal ? ` 〈スコア${scVal}〉` : ''}`;
+    }
+  });
 }
 
 async function searchKeyword() {
