@@ -129,6 +129,24 @@ input[type=text]:focus { border-color: var(--gold); }
 .ctrl-btn:hover { border-color: var(--gold); color: var(--ink); background: #fff; }
 .ctrl-del { border-color: #F5C6C6; color: var(--red-dark); background: #FEF5F5; }
 .ctrl-del:hover { background: var(--red); color: #fff; border-color: var(--red); }
+.fav-btn { border-color: #eee !important; color: #ccc !important; }
+.fav-btn.fav-on { border-color: #ff4d6d !important; color: #ff4d6d !important; background: #fff0f3 !important; }
+.fav-fab { position: fixed; bottom: 24px; right: 16px; background: #ff4d6d; color: #fff; border: none; border-radius: 24px; padding: 12px 20px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 16px rgba(255,77,109,0.4); z-index: 50; font-family: 'Zen Kaku Gothic New', sans-serif; }
+.fav-section { display: none; background: #fff8f9; border-top: 2px solid #ff4d6d; padding: 14px 14px 80px; }
+.fav-section.on { display: block; }
+.fav-section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.fav-section-title { font-size: 14px; font-weight: 700; color: #ff4d6d; }
+.fav-clear-btn { font-size: 11px; padding: 4px 10px; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; color: #666; font-family: 'Zen Kaku Gothic New', sans-serif; }
+.fav-close-btn { font-size: 18px; background: none; border: none; cursor: pointer; color: #aaa; line-height: 1; }
+.fav-card { display: flex; gap: 10px; background: #fff; border: 1px solid #f5e0e3; border-radius: 8px; padding: 10px; margin-bottom: 8px; align-items: flex-start; }
+.fav-card-img { width: 60px; height: 60px; object-fit: contain; border: 1px solid #eee; border-radius: 4px; flex-shrink: 0; background: #f9f5ee; }
+.fav-card-info { flex: 1; font-size: 12px; min-width: 0; }
+.fav-card-name { font-weight: bold; margin-bottom: 3px; line-height: 1.4; word-break: break-all; }
+.fav-card-price { color: var(--red); font-weight: bold; font-size: 13px; margin-bottom: 6px; }
+.fav-card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.fav-card-link { font-size: 11px; padding: 4px 10px; border: 1px solid var(--gold); border-radius: 4px; color: var(--gold); text-decoration: none; white-space: nowrap; }
+.fav-card-del { font-size: 11px; padding: 4px 10px; border: 1px solid #ccc; border-radius: 4px; background: #fff; cursor: pointer; color: #999; font-family: 'Zen Kaku Gothic New', sans-serif; }
+.fav-empty { text-align: center; color: #aaa; padding: 30px; font-size: 13px; }
 
 .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; overflow-y: auto; padding: 20px; }
 .modal-bg.on { display: block; }
@@ -287,6 +305,19 @@ textarea { width: 100%; height: 340px; font-size: 12px; font-family: monospace; 
   <div class="empty"><div style="font-size:36px;margin-bottom:10px">🎁</div>条件を選んでボタンを押してください<br><small style="font-size:11px">楽天APIで実在商品のみ取得します</small></div>
 </div>
 
+<div class="fav-section" id="fav-section">
+  <div class="fav-section-head">
+    <span class="fav-section-title">❤️ お気に入り（<span id="fav-section-count">0</span>件）</span>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <button class="fav-clear-btn" onclick="clearAllFavs()">全削除</button>
+      <button class="fav-close-btn" onclick="toggleFavSection()">×</button>
+    </div>
+  </div>
+  <div id="fav-list"></div>
+</div>
+
+<button class="fav-fab" id="fav-fab" onclick="toggleFavSection()">❤️ お気に入り 0</button>
+
 <div class="modal-bg" id="modal">
   <div class="modal">
     <div class="modal-head">
@@ -410,9 +441,12 @@ function card(item, rank, sc) {
   const chatData = `【${rank}位】\n商品名（楽天表記）：${item.itemName.substring(0,40)}\n価格：¥${price.toLocaleString()}前後（税込）\n口コミ：\nポイント：${point(item)}\n検索ワード：${kw}\n商品画像：[添付してください]\n\n※商品名は10文字以内に変換してください\n※商品画像のテキスト・バナーは無視して商品本体のみ参考にしてください`;
   const genreLabel = document.getElementById("genre").options[document.getElementById("genre").selectedIndex].text;
   const roomData = JSON.stringify({genre:genreLabel,name:keyword(item),catch_:genCatch(item),features:genFeatures(item),tags:genTags(item)});
+  const favData = encodeURIComponent(JSON.stringify({name:item.itemName,price,img:bestImg||medImg||'',url:aff,itemUrl:item.itemUrl,shop:item.shopName||''}));
+  const isFaved = getFavs().some(f => f.itemUrl === item.itemUrl);
 
-  return `<div class="card" data-chatgpt="${encodeURIComponent(chatData)}" data-room="${encodeURIComponent(roomData)}">
+  return `<div class="card" data-chatgpt="${encodeURIComponent(chatData)}" data-room="${encodeURIComponent(roomData)}" data-itemurl="${encodeURIComponent(item.itemUrl||'')}" data-favdata="${favData}">
   <div class="card-ctrl">
+    <button class="ctrl-btn fav-btn${isFaved?' fav-on':''}" onclick="toggleFav(this)" title="お気に入り">${isFaved?'❤️':'♡'}</button>
     <button class="ctrl-btn" onclick="moveCard(this,'up')" title="上へ">↑</button>
     <button class="ctrl-btn" onclick="moveCard(this,'down')" title="下へ">↓</button>
     <button class="ctrl-btn ctrl-del" onclick="deleteCard(this)" title="削除">削除</button>
@@ -586,6 +620,99 @@ function cpChatGPT(btn) {
   const text = decodeURIComponent(card.getAttribute('data-chatgpt'));
   cp(text, btn);
 }
+
+const FAV_KEY = 'rakuten_favs';
+
+function getFavs() {
+  try { return JSON.parse(localStorage.getItem(FAV_KEY) || '[]'); } catch { return []; }
+}
+
+function saveFavs(favs) {
+  localStorage.setItem(FAV_KEY, JSON.stringify(favs));
+}
+
+function updateFavCount() {
+  const n = getFavs().length;
+  document.getElementById('fav-fab').textContent = `❤️ お気に入り ${n}`;
+}
+
+function toggleFav(btn) {
+  const card = btn.closest('.card');
+  const itemUrl = decodeURIComponent(card.dataset.itemurl || '');
+  let favs = getFavs();
+  const idx = favs.findIndex(f => f.itemUrl === itemUrl);
+  if (idx >= 0) {
+    favs.splice(idx, 1);
+    btn.classList.remove('fav-on');
+    btn.textContent = '♡';
+  } else {
+    try {
+      const data = JSON.parse(decodeURIComponent(card.dataset.favdata || '{}'));
+      favs.push(data);
+      btn.classList.add('fav-on');
+      btn.textContent = '❤️';
+    } catch(e) {}
+  }
+  saveFavs(favs);
+  updateFavCount();
+  if (document.getElementById('fav-section').classList.contains('on')) renderFavs();
+}
+
+function toggleFavSection() {
+  const s = document.getElementById('fav-section');
+  s.classList.toggle('on');
+  if (s.classList.contains('on')) renderFavs();
+}
+
+function renderFavs() {
+  const favs = getFavs();
+  document.getElementById('fav-section-count').textContent = favs.length;
+  const list = document.getElementById('fav-list');
+  if (!favs.length) {
+    list.innerHTML = '<div class="fav-empty">お気に入りはまだありません</div>';
+    return;
+  }
+  list.innerHTML = favs.map((f, i) => `
+    <div class="fav-card">
+      ${f.img ? `<img class="fav-card-img" src="${f.img}" alt="" onerror="this.style.display='none'">` : '<div class="fav-card-img" style="display:flex;align-items:center;justify-content:center;font-size:22px;">🎁</div>'}
+      <div class="fav-card-info">
+        <div class="fav-card-name">${f.name.substring(0,50)}${f.name.length>50?'...':''}</div>
+        <div class="fav-card-price">¥${f.price.toLocaleString()}</div>
+        <div class="fav-card-actions">
+          <a href="${f.url}" target="_blank" class="fav-card-link">楽天で見る↗</a>
+          <button class="fav-card-del" onclick="removeFav(${i})">削除</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function removeFav(idx) {
+  const favs = getFavs();
+  const removed = favs.splice(idx, 1)[0];
+  saveFavs(favs);
+  updateFavCount();
+  renderFavs();
+  document.querySelectorAll('.card').forEach(card => {
+    if (decodeURIComponent(card.dataset.itemurl||'') === removed.itemUrl) {
+      const btn = card.querySelector('.fav-btn');
+      if (btn) { btn.classList.remove('fav-on'); btn.textContent = '♡'; }
+    }
+  });
+}
+
+function clearAllFavs() {
+  if (!confirm('お気に入りを全削除しますか？')) return;
+  saveFavs([]);
+  updateFavCount();
+  renderFavs();
+  document.querySelectorAll('.fav-btn.fav-on').forEach(btn => {
+    btn.classList.remove('fav-on');
+    btn.textContent = '♡';
+  });
+}
+
+updateFavCount();
 
 function cp(text, btn) {
   navigator.clipboard.writeText(text).then(()=>{
