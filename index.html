@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -444,7 +444,7 @@ function card(item, rank, sc) {
   const favData = encodeURIComponent(JSON.stringify({name:item.itemName,price,img:bestImg||medImg||'',url:aff,itemUrl:item.itemUrl,shop:item.shopName||''}));
   const isFaved = getFavs().some(f => f.itemUrl === item.itemUrl);
 
-  return `<div class="card" data-chatgpt="${encodeURIComponent(chatData)}" data-room="${encodeURIComponent(roomData)}" data-itemurl="${encodeURIComponent(item.itemUrl||'')}" data-favdata="${favData}">
+  return `<div class="card" data-chatgpt="${encodeURIComponent(chatData)}" data-room="${encodeURIComponent(roomData)}" data-itemurl="${encodeURIComponent(item.itemUrl||'')}" data-favdata="${favData}" data-aff="${encodeURIComponent(aff)}">
   <div class="card-ctrl">
     <button class="ctrl-btn fav-btn${isFaved?' fav-on':''}" onclick="toggleFav(this)" title="お気に入り">${isFaved?'❤️':'♡'}</button>
     <button class="ctrl-btn" onclick="moveCard(this,'up')" title="上へ">↑</button>
@@ -581,8 +581,7 @@ function cpX(btn) {
   const name = nameLine.replace('商品名（楽天表記）：','').trim().substring(0,20);
   const priceLine = lines.find(l => l.includes('価格')) || '';
   const price = priceLine.replace('価格：','').trim();
-  const affEl = card.querySelector('.aff-url');
-  const aff = affEl ? affEl.textContent.replace('...','') : '';
+  const aff = card.dataset.aff ? decodeURIComponent(card.dataset.aff) : '';
   const n = name;
 
   let hook = '';
@@ -764,7 +763,6 @@ function moveCard(btn, dir) {
 function deleteCard(btn) {
   const card = btn.closest('.card');
   card.remove();
-  ranking = ranking.filter((_, i) => i !== 0); // keep array length in sync
   ranking.pop();
   updateRankBadges();
   const area = document.getElementById('area');
