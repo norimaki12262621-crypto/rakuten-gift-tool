@@ -832,26 +832,42 @@ async function searchByUrl() {
   resultsEl.classList.add('on');
   try {
     let items = [];
+    let apiErr = '';
 
+    // ① 商品コードで直接引く（他の絞り込み条件は付けない）
     if (shopCode && itemCode) {
-      const params = new URLSearchParams({ itemCode: shopCode+':'+itemCode, hits:10, format:'json', imageFlag:1 });
+      const params = new URLSearchParams({ itemCode: shopCode+':'+itemCode });
       const res = await fetch(`/api/rakuten?${params}`);
       const data = await res.json();
-      if (!data.error) items = (data.Items || []).map(i => i.Item || i);
+      if (data.error) apiErr = data.error_description || data.error;
+      else items = (data.Items || []).map(i => i.Item || i);
     }
 
+    // ② ショップ内検索して、URLが一致する商品を拾う（独自コードのURL対策）
+    if (!items.length && shopCode && itemCode) {
+      const params = new URLSearchParams({ shopCode, keyword: itemCode.replace(/[-_]/g, ' '), hits: 30 });
+      const res = await fetch(`/api/rakuten?${params}`);
+      const data = await res.json();
+      if (!data.error) {
+        const all = (data.Items || []).map(i => i.Item || i);
+        const hit = all.filter(i => (i.itemUrl || '').includes(`/${shopCode}/${itemCode}`));
+        items = hit.length ? hit : all;
+      }
+    }
+
+    // ③ URLにkeyword=が含まれる検索結果ページの場合
     if (!items.length) {
       const kwMatch = url.match(/keyword=([^&]+)/);
       const keyword = kwMatch ? decodeURIComponent(kwMatch[1]) : '';
       if (keyword) {
-        const params2 = new URLSearchParams({ keyword, hits:10, sort:'-reviewCount', format:'json', imageFlag:1 });
+        const params2 = new URLSearchParams({ keyword, hits:10, sort:'-reviewCount' });
         const res2 = await fetch(`/api/rakuten?${params2}`);
         const data2 = await res2.json();
         if (!data2.error) items = (data2.Items || []).map(i => i.Item || i);
       }
     }
 
-    if (!items.length) throw new Error('この商品ページURLからは自動で見つけられませんでした。お手数ですが、下の「フリーキーワード検索」に商品名を入力して検索してください。');
+    if (!items.length) throw new Error(`この商品ページURLからは自動で見つけられませんでした${apiErr ? `（楽天API: ${apiErr}）` : ''}。お手数ですが、下の「フリーキーワード検索」に商品名を入力して検索してください。`);
     listEl.innerHTML = items.map((item, idx) => {
       const medImg = item.mediumImageUrls&&item.mediumImageUrls[0] ? (item.mediumImageUrls[0].imageUrl||item.mediumImageUrls[0]) : null;
       const imgHtml = medImg ? `<img class="sr-img" src="${medImg}" alt="" loading="lazy" onerror="this.style.display='none'">` : `<div class="sr-img-ph">🎁</div>`;
@@ -879,6 +895,11 @@ async function searchKeyword() {
   const kw = input.value.trim();
 
   if (!kw) { kwErr.textContent='キーワードを入力してください'; kwErr.classList.add('on'); return; }
+  if (/^https?:\/\//i.test(kw) || /rakuten\.co\.jp|a\.r10\.to/i.test(kw)) {
+    kwErr.textContent = 'ここはURLではなく「商品名」を入れる欄です。例：プリザーブドフラワー ギフト';
+    kwErr.classList.add('on');
+    return;
+  }
   kwErr.classList.remove('on');
   btn.disabled = true; btn.textContent = '検索中...';
   listEl.innerHTML = '<div style="text-align:center;padding:16px;color:#aaa;"><div class="spinner" style="margin:0 auto 8px;"></div>取得中...</div>';
