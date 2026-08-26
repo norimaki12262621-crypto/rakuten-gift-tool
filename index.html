@@ -855,7 +855,10 @@ async function searchByUrl() {
         const titleData = await titleRes.json();
         if (titleData.error) titleErr = titleData.error;
         keyword = (titleData.title || '').split(/[|｜]/)[0].trim();
-        if (!keyword && !titleErr) titleErr = 'ページタイトルを取得できませんでした';
+        if (!keyword && !titleErr) {
+          const d = titleData.debug;
+          titleErr = d ? `status=${d.status} length=${d.length} snippet="${d.snippet.slice(0,120)}"` : 'ページタイトルを取得できませんでした';
+        }
       } catch(e) { titleErr = e.message; }
       if (!keyword) {
         const kwMatch = url.match(/keyword=([^&]+)/);
