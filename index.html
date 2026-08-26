@@ -845,17 +845,20 @@ async function searchByUrl() {
 
     // ② ショップ内の商品を順に取得し、URLが一致する商品を探す（独自コードのURL対策）
     if (!items.length && shopCode && itemCode) {
-      const want = `/${shopCode}/${itemCode}`;
-      for (let p = 1; p <= 8; p++) {
+      const want = `/${shopCode}/${itemCode}`.toLowerCase();
+      let scanned = 0;
+      for (let p = 1; p <= 10; p++) {
         const params = new URLSearchParams({ shopCode, hits: 30, page: p });
         const res = await fetch(`/api/rakuten?${params}`);
         const data = await res.json();
-        if (data.error) { apiErr = data.error_description || data.error; break; }
+        if (data.error) { apiErr = `店舗内検索: ${data.error_description || data.error}`; break; }
         const all = (data.Items || []).map(i => i.Item || i);
         if (!all.length) break;
-        const hit = all.filter(i => (i.itemUrl || '').includes(want));
+        scanned += all.length;
+        const hit = all.filter(i => (i.itemUrl || '').toLowerCase().includes(want));
         if (hit.length) { items = hit; break; }
       }
+      if (!items.length && !apiErr && scanned) apiErr = `店舗内${scanned}件を確認しましたが一致なし`;
     }
 
     // ③ URLにkeyword=が含まれる検索結果ページの場合

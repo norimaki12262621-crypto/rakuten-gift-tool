@@ -30,7 +30,10 @@ module.exports = async function handler(req, res) {
     params.set('maxPrice', maxPrice || 7000);
   }
 
-  const url = `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701?${params}`;
+  // itemCode の "ショップコード:商品コード" の区切りコロンは、%3A にエンコードすると
+  // 楽天API側で "itemCode is not valid" になるためリテラルのまま送る。
+  const qs = params.toString().replace(/%3A/g, ':');
+  const url = `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701?${qs}`;
 
   try {
     const r = await fetch(url, {
