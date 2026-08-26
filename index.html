@@ -837,19 +837,34 @@ async function searchByUrl() {
   listEl.innerHTML = '<div style="text-align:center;padding:16px;color:#aaa;"><div class="spinner" style="margin:0 auto 8px;"></div>取得中...</div>';
   resultsEl.classList.add('on');
   try {
-    let params;
+    let items = [];
+
     if (shopCode && itemCode) {
-      params = new URLSearchParams({ shopCode, itemCode: shopCode+':'+itemCode, hits:10, format:'json', imageFlag:1 });
-    } else {
-      const kwMatch = url.match(/keyword=([^&]+)/);
-      const keyword = kwMatch ? decodeURIComponent(kwMatch[1]) : '';
-      if (!keyword) throw new Error('URLから商品情報を取得できませんでした');
-      params = new URLSearchParams({ keyword, hits:10, sort:'-reviewCount', format:'json', imageFlag:1 });
+      const params = new URLSearchParams({ itemCode: shopCode+':'+itemCode, hits:10, format:'json', imageFlag:1 });
+      const res = await fetch(`/api/rakuten?${params}`);
+      const data = await res.json();
+      if (!data.error) items = (data.Items || []).map(i => i.Item || i);
     }
-    const res = await fetch(`/api/rakuten?${params}`);
-    const data = await res.json();
-    if (data.error) throw new Error(data.error_description || data.error);
-    const items = (data.Items || []).map(i => i.Item || i);
+
+    if (!items.length) {
+      let keyword = '';
+      try {
+        const titleRes = await fetch(`/api/pagetitle?url=${encodeURIComponent(url)}`);
+        const titleData = await titleRes.json();
+        keyword = (titleData.title || '').split(/[|｜]/)[0].trim();
+      } catch(e) {}
+      if (!keyword) {
+        const kwMatch = url.match(/keyword=([^&]+)/);
+        keyword = kwMatch ? decodeURIComponent(kwMatch[1]) : '';
+      }
+      if (!keyword) throw new Error('URLから商品情報を取得できませんでした');
+      const params2 = new URLSearchParams({ keyword, hits:10, sort:'-reviewCount', format:'json', imageFlag:1 });
+      const res2 = await fetch(`/api/rakuten?${params2}`);
+      const data2 = await res2.json();
+      if (data2.error) throw new Error(data2.error_description || data2.error);
+      items = (data2.Items || []).map(i => i.Item || i);
+    }
+
     if (!items.length) throw new Error('該当商品が見つかりませんでした');
     listEl.innerHTML = items.map((item, idx) => {
       const medImg = item.mediumImageUrls&&item.mediumImageUrls[0] ? (item.mediumImageUrls[0].imageUrl||item.mediumImageUrls[0]) : null;
