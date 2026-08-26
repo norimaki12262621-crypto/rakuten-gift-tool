@@ -1,66 +1,75 @@
-// 楽天APIの受け付ける呼び出し方を切り分けるための調査スクリプト。
+// URL のスラッグ（例: t-interior/hps05）から商品を特定できるか検証する。
 // GitHub Actions 上で実行し、ログで結果を確認する。
 const APP_ID = '9a9bb16b-a393-414a-ad63-ea58ecf01daa';
 const ACCESS_KEY = 'pk_utmSC6YohMKR5EE6CDCiuC06NbdYwptCTfGFsk3LZhd';
 const AFF_ID = '534cdfaf.e35a1702.534cdfb0.c0ce9a58';
 const ENDPOINT = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701';
 
-async function probe(label, extra, { literalColon = false } = {}) {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function fetchPage(shopCode, page) {
   const params = new URLSearchParams({
     applicationId: APP_ID,
     accessKey: ACCESS_KEY,
     affiliateId: AFF_ID,
     format: 'json',
-    ...extra,
+    shopCode,
+    hits: 30,
+    page,
   });
-  let qs = params.toString();
-  if (literalColon) qs = qs.replace(/%3A/g, ':');
-
-  try {
-    const r = await fetch(`${ENDPOINT}?${qs}`, {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const r = await fetch(`${ENDPOINT}?${params}`, {
       headers: {
         Origin: 'https://rakuten-gift-tool.vercel.app',
         Referer: 'https://rakuten-gift-tool.vercel.app/',
       },
     });
     const text = await r.text();
-    let summary = text.slice(0, 200);
-    try {
-      const j = JSON.parse(text);
-      if (Array.isArray(j.Items)) {
-        summary = `Items=${j.Items.length}`;
-        const first = j.Items[0] && (j.Items[0].Item || j.Items[0]);
-        if (first) summary += ` first.itemCode=${first.itemCode} url=${first.itemUrl}`;
-      }
-    } catch (e) { /* 非JSONならそのまま先頭を表示 */ }
-    console.log(`[${label}] status=${r.status} ${summary}`);
-  } catch (e) {
-    console.log(`[${label}] THREW ${e.message}`);
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) { /* noop */ }
+    if (data && Array.isArray(data.Items)) return data;
+    if (r.status === 429) { await sleep(1500); continue; }
+    console.log(`  page${page} 失敗 status=${r.status} ${text.slice(0, 120)}`);
+    return null;
   }
+  console.log(`  page${page} レート制限で断念`);
+  return null;
+}
+
+// APIが返す itemUrl はアフィリエイト形式で、実URLが pc= に
+// パーセントエンコードされて埋め込まれている。デコードしてから照合する。
+function urlMatches(itemUrl, want) {
+  let u = itemUrl || '';
+  for (let i = 0; i < 2; i++) {
+    try { u = decodeURIComponent(u); } catch (e) { break; }
+  }
+  return u.toLowerCase().includes(want);
+}
+
+async function findBySlug(shopCode, slug, maxPages) {
+  const want = `/${shopCode}/${slug}/`.toLowerCase();
+  let scanned = 0;
+  for (let p = 1; p <= maxPages; p++) {
+    const data = await fetchPage(shopCode, p);
+    if (!data) return;
+    const items = data.Items.map((i) => i.Item || i);
+    if (!items.length) { console.log(`  page${p} で商品終わり（計${scanned}件）`); break; }
+    scanned += items.length;
+    const hit = items.find((i) => urlMatches(i.itemUrl, want));
+    if (hit) {
+      console.log(`  ★一致 page=${p} scanned=${scanned} itemCode=${hit.itemCode}`);
+      console.log(`   name=${String(hit.itemName).slice(0, 60)} price=${hit.itemPrice}`);
+      return;
+    }
+    await sleep(400);
+  }
+  console.log(`  一致なし（${scanned}件確認）`);
 }
 
 (async () => {
-  console.log('=== itemCode の送り方 ===');
-  await probe('A itemCode literal colon', { itemCode: 't-interior:hps05' }, { literalColon: true });
-  await probe('B itemCode %3A encoded', { itemCode: 't-interior:hps05' });
-  await probe('C itemCode 別商品 literal', { itemCode: 'cosmediva:4971710541328' }, { literalColon: true });
+  console.log('=== t-interior / hps05 ===');
+  await findBySlug('t-interior', 'hps05', 34);
 
-  console.log('=== shopCode 単体で引けるか ===');
-  await probe('D shopCode only', { shopCode: 't-interior', hits: 3 });
-  await probe('E shopCode + page2', { shopCode: 't-interior', hits: 3, page: 2 });
-  await probe('F shopCode + sort', { shopCode: 't-interior', hits: 3, sort: '-reviewCount' });
-
-  console.log('=== 基準（動くはずのキーワード検索） ===');
-  await probe('G keyword baseline', { keyword: 'コスメ', hits: 3 });
-
-  console.log('=== 旧エンドポイントとの比較 ===');
-  try {
-    const p = new URLSearchParams({ applicationId: APP_ID, accessKey: ACCESS_KEY, format: 'json', itemCode: 't-interior:hps05' });
-    const r = await fetch(`https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260401?${p.toString().replace(/%3A/g, ':')}`, {
-      headers: { Origin: 'https://rakuten-gift-tool.vercel.app', Referer: 'https://rakuten-gift-tool.vercel.app/' },
-    });
-    console.log(`[H 20260401 itemCode] status=${r.status} ${(await r.text()).slice(0, 200)}`);
-  } catch (e) {
-    console.log(`[H] THREW ${e.message}`);
-  }
+  console.log('=== beautypalace / flower60 ===');
+  await findBySlug('beautypalace', 'flower60', 34);
 })();
