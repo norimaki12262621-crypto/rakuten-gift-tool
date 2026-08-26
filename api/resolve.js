@@ -1,11 +1,12 @@
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
-  const { url } = req.query;
+  let { url } = req.query;
   if (!url) {
     res.status(400).json({ error: 'urlパラメータが必要です' });
     return;
   }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
   try {
     const r = await fetch(url, {
       method: 'GET',

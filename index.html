@@ -810,6 +810,7 @@ async function searchByUrl() {
   const listEl = document.getElementById('srList');
   let url = input.value.trim();
   if (!url) { urlErr.textContent='URLを入力してください'; urlErr.classList.add('on'); return; }
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
   urlErr.classList.remove('on');
   btn.disabled = true; btn.textContent = '検索中...';
   if (url.includes('a.r10.to')) {
