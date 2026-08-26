@@ -848,16 +848,19 @@ async function searchByUrl() {
 
     if (!items.length) {
       let keyword = '';
+      let titleErr = '';
       try {
         const titleRes = await fetch(`/api/pagetitle?url=${encodeURIComponent(url)}`);
         const titleData = await titleRes.json();
+        if (titleData.error) titleErr = titleData.error;
         keyword = (titleData.title || '').split(/[|｜]/)[0].trim();
-      } catch(e) {}
+        if (!keyword && !titleErr) titleErr = 'ページタイトルを取得できませんでした';
+      } catch(e) { titleErr = e.message; }
       if (!keyword) {
         const kwMatch = url.match(/keyword=([^&]+)/);
         keyword = kwMatch ? decodeURIComponent(kwMatch[1]) : '';
       }
-      if (!keyword) throw new Error('URLから商品情報を取得できませんでした');
+      if (!keyword) throw new Error(`URLから商品情報を取得できませんでした（詳細: ${titleErr || '不明なエラー'}）`);
       const params2 = new URLSearchParams({ keyword, hits:10, sort:'-reviewCount', format:'json', imageFlag:1 });
       const res2 = await fetch(`/api/rakuten?${params2}`);
       const data2 = await res2.json();
