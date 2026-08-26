@@ -843,15 +843,18 @@ async function searchByUrl() {
       else items = (data.Items || []).map(i => i.Item || i);
     }
 
-    // ② ショップ内検索して、URLが一致する商品を拾う（独自コードのURL対策）
+    // ② ショップ内の商品を順に取得し、URLが一致する商品を探す（独自コードのURL対策）
     if (!items.length && shopCode && itemCode) {
-      const params = new URLSearchParams({ shopCode, keyword: itemCode.replace(/[-_]/g, ' '), hits: 30 });
-      const res = await fetch(`/api/rakuten?${params}`);
-      const data = await res.json();
-      if (!data.error) {
+      const want = `/${shopCode}/${itemCode}`;
+      for (let p = 1; p <= 8; p++) {
+        const params = new URLSearchParams({ shopCode, hits: 30, page: p });
+        const res = await fetch(`/api/rakuten?${params}`);
+        const data = await res.json();
+        if (data.error) { apiErr = data.error_description || data.error; break; }
         const all = (data.Items || []).map(i => i.Item || i);
-        const hit = all.filter(i => (i.itemUrl || '').includes(`/${shopCode}/${itemCode}`));
-        items = hit.length ? hit : all;
+        if (!all.length) break;
+        const hit = all.filter(i => (i.itemUrl || '').includes(want));
+        if (hit.length) { items = hit; break; }
       }
     }
 

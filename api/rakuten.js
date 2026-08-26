@@ -1,7 +1,7 @@
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET');
-  const { keyword, itemCode, shopCode, minPrice, maxPrice, sort, hits } = req.query;
+  const { keyword, itemCode, shopCode, minPrice, maxPrice, sort, hits, page } = req.query;
 
   const params = new URLSearchParams({
     applicationId: '9a9bb16b-a393-414a-ad63-ea58ecf01daa',
@@ -15,15 +15,19 @@ module.exports = async function handler(req, res) {
     // 商品コード指定検索。sort や価格帯など他の絞り込み条件を併用すると
     // 楽天API側で "itemCode is not valid" として弾かれるため単独で送る。
     params.set('itemCode', itemCode);
+  } else if (shopCode) {
+    // ショップ内検索。keyword を補わない（URL から商品を特定する用途のため）
+    params.set('shopCode', shopCode);
+    params.set('hits', hits || 30);
+    if (page) params.set('page', page);
+    if (keyword) params.set('keyword', keyword);
+    if (sort) params.set('sort', sort);
   } else {
     params.set('hits', hits || 30);
     params.set('sort', sort || '-reviewCount');
-    if (shopCode) params.set('shopCode', shopCode);
     params.set('keyword', keyword || '母の日 プレゼント');
-    if (!shopCode) {
-      params.set('minPrice', minPrice || 3000);
-      params.set('maxPrice', maxPrice || 7000);
-    }
+    params.set('minPrice', minPrice || 3000);
+    params.set('maxPrice', maxPrice || 7000);
   }
 
   const url = `https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701?${params}`;
