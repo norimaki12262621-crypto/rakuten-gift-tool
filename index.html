@@ -811,6 +811,14 @@ async function searchByUrl() {
   let url = input.value.trim();
   if (!url) { urlErr.textContent='URLを入力してください'; urlErr.classList.add('on'); return; }
   urlErr.classList.remove('on');
+  btn.disabled = true; btn.textContent = '検索中...';
+  if (url.includes('a.r10.to')) {
+    try {
+      const expRes = await fetch(`/api/expand?url=${encodeURIComponent(url)}`);
+      const expData = await expRes.json();
+      if (expData.url) url = expData.url;
+    } catch(e) {}
+  }
   try {
     if (url.includes('hb.afl.rakuten') || url.includes('hgc/')) {
       const pcMatch = url.match(/pc=([^&]+)/);
@@ -820,7 +828,6 @@ async function searchByUrl() {
   let shopCode = '', itemCode = '';
   const match = url.match(/item\.rakuten\.co\.jp\/([^\/]+)\/([^\/\?]+)/);
   if (match) { shopCode = match[1]; itemCode = match[2]; }
-  btn.disabled = true; btn.textContent = '検索中...';
   listEl.innerHTML = '<div style="text-align:center;padding:16px;color:#aaa;"><div class="spinner" style="margin:0 auto 8px;"></div>取得中...</div>';
   resultsEl.classList.add('on');
   try {
