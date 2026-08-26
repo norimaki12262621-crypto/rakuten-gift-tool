@@ -810,15 +810,13 @@ async function searchByUrl() {
   const listEl = document.getElementById('srList');
   let url = input.value.trim();
   if (!url) { urlErr.textContent='URLを入力してください'; urlErr.classList.add('on'); return; }
+  if (url.includes('a.r10.to')) {
+    urlErr.textContent = '楽天市場の商品ページURL（item.rakuten.co.jp/...）またはアフィリエイトURL（hb.afl.rakuten...）を貼り付けてください';
+    urlErr.classList.add('on');
+    return;
+  }
   urlErr.classList.remove('on');
   btn.disabled = true; btn.textContent = '検索中...';
-  if (url.includes('a.r10.to')) {
-    try {
-      const expRes = await fetch(`/api/expand?url=${encodeURIComponent(url)}`);
-      const expData = await expRes.json();
-      if (expData.url) url = expData.url;
-    } catch(e) {}
-  }
   try {
     if (url.includes('hb.afl.rakuten') || url.includes('hgc/')) {
       const pcMatch = url.match(/pc=([^&]+)/);
