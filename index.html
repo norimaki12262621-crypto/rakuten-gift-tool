@@ -848,31 +848,17 @@ async function searchByUrl() {
     }
 
     if (!items.length) {
-      let keyword = '';
-      let titleErr = '';
-      try {
-        const titleRes = await fetch(`/api/pagetitle?url=${encodeURIComponent(url)}`);
-        const titleData = await titleRes.json();
-        if (titleData.error) titleErr = titleData.error;
-        keyword = (titleData.title || '').split(/[|｜]/)[0].trim();
-        if (!keyword && !titleErr) {
-          const d = titleData.debug;
-          titleErr = d ? `status=${d.status} length=${d.length} snippet="${d.snippet.slice(0,120)}"` : 'ページタイトルを取得できませんでした';
-        }
-      } catch(e) { titleErr = e.message; }
-      if (!keyword) {
-        const kwMatch = url.match(/keyword=([^&]+)/);
-        keyword = kwMatch ? decodeURIComponent(kwMatch[1]) : '';
+      const kwMatch = url.match(/keyword=([^&]+)/);
+      const keyword = kwMatch ? decodeURIComponent(kwMatch[1]) : '';
+      if (keyword) {
+        const params2 = new URLSearchParams({ keyword, hits:10, sort:'-reviewCount', format:'json', imageFlag:1 });
+        const res2 = await fetch(`/api/rakuten?${params2}`);
+        const data2 = await res2.json();
+        if (!data2.error) items = (data2.Items || []).map(i => i.Item || i);
       }
-      if (!keyword) throw new Error(`URLから商品情報を取得できませんでした（詳細: ${titleErr || '不明なエラー'}）`);
-      const params2 = new URLSearchParams({ keyword, hits:10, sort:'-reviewCount', format:'json', imageFlag:1 });
-      const res2 = await fetch(`/api/rakuten?${params2}`);
-      const data2 = await res2.json();
-      if (data2.error) throw new Error(data2.error_description || data2.error);
-      items = (data2.Items || []).map(i => i.Item || i);
     }
 
-    if (!items.length) throw new Error('該当商品が見つかりませんでした');
+    if (!items.length) throw new Error('この商品ページURLからは自動で見つけられませんでした。お手数ですが、下の「フリーキーワード検索」に商品名を入力して検索してください。');
     listEl.innerHTML = items.map((item, idx) => {
       const medImg = item.mediumImageUrls&&item.mediumImageUrls[0] ? (item.mediumImageUrls[0].imageUrl||item.mediumImageUrls[0]) : null;
       const imgHtml = medImg ? `<img class="sr-img" src="${medImg}" alt="" loading="lazy" onerror="this.style.display='none'">` : `<div class="sr-img-ph">🎁</div>`;
