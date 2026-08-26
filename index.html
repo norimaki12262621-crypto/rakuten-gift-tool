@@ -802,6 +802,18 @@ function updateRankBadges() {
   });
 }
 
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// 楽天APIが返す itemUrl はアフィリエイト形式で、実URLが pc= に
+// パーセントエンコードされて埋め込まれている。デコードしてから照合する。
+function itemUrlMatches(itemUrl, want) {
+  let u = itemUrl || '';
+  for (let i = 0; i < 2; i++) {
+    try { u = decodeURIComponent(u); } catch(e) { break; }
+  }
+  return u.toLowerCase().includes(want);
+}
+
 async function searchByUrl() {
   const input = document.getElementById('urlInput');
   const btn = document.getElementById('urlBtn');
@@ -845,18 +857,30 @@ async function searchByUrl() {
 
     // ② ショップ内の商品を順に取得し、URLが一致する商品を探す（独自コードのURL対策）
     if (!items.length && shopCode && itemCode) {
-      const want = `/${shopCode}/${itemCode}`.toLowerCase();
+      const want = `/${shopCode}/${itemCode}/`.toLowerCase();
       let scanned = 0;
-      for (let p = 1; p <= 10; p++) {
+      for (let p = 1; p <= 34; p++) {
         const params = new URLSearchParams({ shopCode, hits: 30, page: p });
-        const res = await fetch(`/api/rakuten?${params}`);
-        const data = await res.json();
-        if (data.error) { apiErr = `店舗内検索: ${data.error_description || data.error}`; break; }
-        const all = (data.Items || []).map(i => i.Item || i);
+        let data = null;
+        // 楽天APIは秒間のレート制限があるため 429 は待って取り直す
+        for (let attempt = 0; attempt < 4; attempt++) {
+          const res = await fetch(`/api/rakuten?${params}`);
+          data = await res.json();
+          if (data && Array.isArray(data.Items)) break;
+          if (data && data.statusCode === 429) { await sleep(1500); data = null; continue; }
+          break;
+        }
+        if (!data || !Array.isArray(data.Items)) {
+          apiErr = `店舗内検索: ${(data && (data.error_description || data.error || data.message)) || '取得できませんでした'}`;
+          break;
+        }
+        const all = data.Items.map(i => i.Item || i);
         if (!all.length) break;
         scanned += all.length;
-        const hit = all.filter(i => (i.itemUrl || '').toLowerCase().includes(want));
+        listEl.innerHTML = `<div style="text-align:center;padding:16px;color:#aaa;"><div class="spinner" style="margin:0 auto 8px;"></div>店舗内を検索中... ${scanned}件</div>`;
+        const hit = all.filter(i => itemUrlMatches(i.itemUrl, want));
         if (hit.length) { items = hit; break; }
+        await sleep(400);
       }
       if (!items.length && !apiErr && scanned) apiErr = `店舗内${scanned}件を確認しましたが一致なし`;
     }
