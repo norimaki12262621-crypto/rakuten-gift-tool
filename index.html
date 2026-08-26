@@ -280,6 +280,15 @@ textarea { width: 100%; height: 340px; font-size: 12px; font-family: monospace; 
   <button class="btn" id="searchBtn" onclick="run()">▶ 楽天APIで実商品ランキングを生成</button>
 </div>
 
+<div class="kw-search-panel" style="border-top:1px solid var(--border);">
+  <div class="kw-search-title">🔗 楽天URLから商品を検索</div>
+  <div class="kw-search-row">
+    <input type="text" id="urlInput" class="kw-search-input" placeholder="楽天商品URL または アフィリエイトURLを貼り付け" />
+    <button class="kw-search-btn" id="urlBtn" onclick="searchByUrl()">検索</button>
+  </div>
+  <div class="kw-err" id="urlErr"></div>
+</div>
+
 <div class="kw-search-panel">
   <div class="kw-search-title">🔍 フリーキーワード検索</div>
   <div class="kw-search-row">
@@ -791,6 +800,60 @@ function updateRankBadges() {
       rankLbl.textContent = `${icon} ${rank}位${scVal ? ` 〈スコア${scVal}〉` : ''}`;
     }
   });
+}
+
+async function searchByUrl() {
+  const input = document.getElementById('urlInput');
+  const btn = document.getElementById('urlBtn');
+  const urlErr = document.getElementById('urlErr');
+  const resultsEl = document.getElementById('searchResults');
+  const listEl = document.getElementById('srList');
+  let url = input.value.trim();
+  if (!url) { urlErr.textContent='URLを入力してください'; urlErr.classList.add('on'); return; }
+  urlErr.classList.remove('on');
+  try {
+    if (url.includes('hb.afl.rakuten') || url.includes('hgc/')) {
+      const pcMatch = url.match(/pc=([^&]+)/);
+      if (pcMatch) url = decodeURIComponent(decodeURIComponent(pcMatch[1]));
+    }
+  } catch(e) {}
+  let shopCode = '', itemCode = '';
+  const match = url.match(/item\.rakuten\.co\.jp\/([^\/]+)\/([^\/\?]+)/);
+  if (match) { shopCode = match[1]; itemCode = match[2]; }
+  btn.disabled = true; btn.textContent = '検索中...';
+  listEl.innerHTML = '<div style="text-align:center;padding:16px;color:#aaa;"><div class="spinner" style="margin:0 auto 8px;"></div>取得中...</div>';
+  resultsEl.classList.add('on');
+  try {
+    let params;
+    if (shopCode && itemCode) {
+      params = new URLSearchParams({ shopCode, itemCode: shopCode+':'+itemCode, hits:10, format:'json', imageFlag:1 });
+    } else {
+      const kwMatch = url.match(/keyword=([^&]+)/);
+      const keyword = kwMatch ? decodeURIComponent(kwMatch[1]) : '';
+      if (!keyword) throw new Error('URLから商品情報を取得できませんでした');
+      params = new URLSearchParams({ keyword, hits:10, sort:'-reviewCount', format:'json', imageFlag:1 });
+    }
+    const res = await fetch(`/api/rakuten?${params}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error_description || data.error);
+    const items = (data.Items || []).map(i => i.Item || i);
+    if (!items.length) throw new Error('該当商品が見つかりませんでした');
+    listEl.innerHTML = items.map((item, idx) => {
+      const medImg = item.mediumImageUrls&&item.mediumImageUrls[0] ? (item.mediumImageUrls[0].imageUrl||item.mediumImageUrls[0]) : null;
+      const imgHtml = medImg ? `<img class="sr-img" src="${medImg}" alt="" loading="lazy" onerror="this.style.display='none'">` : `<div class="sr-img-ph">🎁</div>`;
+      const avg = parseFloat(item.reviewAverage)||0;
+      const cnt = parseInt(item.reviewCount)||0;
+      const price = parseInt(item.itemPrice)||0;
+      return `<div class="sr-card" id="sr-${idx}">${imgHtml}<div class="sr-info"><div class="sr-name">${item.itemName}</div><div class="sr-price">¥${price.toLocaleString()}</div>${avg>0?`<div class="sr-review"><span style="color:var(--gold)">${stars(avg)}</span> ${avg.toFixed(1)} | ${cnt.toLocaleString()}件</div>`:''}</div><button class="add-btn" onclick="addToRanking(${idx})">追加</button></div>`;
+    }).join('');
+    window._srItems = items;
+  } catch(e) {
+    urlErr.textContent = '⚠️ ' + e.message;
+    urlErr.classList.add('on');
+    listEl.innerHTML = '';
+    resultsEl.classList.remove('on');
+  }
+  btn.disabled = false; btn.textContent = '検索';
 }
 
 async function searchKeyword() {
