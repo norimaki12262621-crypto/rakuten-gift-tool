@@ -1,0 +1,77 @@
+{
+  "policy": "manual-reviewed-body-first-v2",
+  "reviewDate": "2026-11-05",
+  "selected": [
+    {
+      "shade": "00",
+      "candidateId": "00-6-1",
+      "itemCode": "wj-yakugyo:10001091",
+      "itemName": "【土日祝日も出荷】コーセー コスメデコルテ ルースパウダー 00 translucent 20g フェイスパウダー 国内正規品",
+      "priceAtReview": 4050,
+      "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/wj-yakugyo/cabinet/item/item01/4971710378412.jpg?_ex=600x600",
+      "localPreviewFile": "/workspace/rakuten-gift-tool-local/00-6-1.jpg",
+      "reviewed": true,
+      "reason": "本体・蓋・パフが大きい。外箱・販促バナー・ショップロゴなし。画像内色番号と楽天APIの商品名が一致。同じショップ・同じ構図。",
+      "limitation": null
+    },
+    {
+      "shade": "01",
+      "candidateId": "01-extra3-1",
+      "itemCode": "wj-yakugyo:10001092",
+      "itemName": "【土日祝日も出荷】コーセー コスメデコルテ ルースパウダー 01 crystal translucent 20g フェイスパウダー 国内正規品",
+      "priceAtReview": 4098,
+      "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/wj-yakugyo/cabinet/item/item01/4971710378481.jpg?_ex=600x600",
+      "localPreviewFile": "/workspace/rakuten-gift-tool-local/01-extra3-1.jpg",
+      "reviewed": true,
+      "reason": "本体・蓋・パフが大きい。外箱・販促バナー・ショップロゴなし。画像内色番号と楽天APIの商品名が一致。同じショップ・同じ構図。",
+      "limitation": null
+    },
+    {
+      "shade": "03",
+      "candidateId": "03-clean5-1",
+      "itemCode": "wj-yakugyo:10001094",
+      "itemName": "【土日祝日も出荷】コーセー コスメデコルテ ルースパウダー 03 luminous pink 20g フェイスパウダー 国内正規品",
+      "priceAtReview": 4130,
+      "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/wj-yakugyo/cabinet/item/item01/4971710378443.jpg?_ex=600x600",
+      "localPreviewFile": "/workspace/rakuten-gift-tool-local/03-clean5-1.jpg",
+      "reviewed": true,
+      "reason": "本体・蓋・パフが大きい。外箱・販促バナー・ショップロゴなし。画像内色番号と楽天APIの商品名が一致。同じショップ・同じ構図。",
+      "limitation": null
+    }
+  ],
+  "previousSelected": [
+    {
+      "shade": "00",
+      "candidateId": "00-4-1",
+      "itemCode": "treasurebeauty:10083342",
+      "itemName": "コスメデコルテ ルース パウダー 00 translucent 20g | ルースパウダー 肌の透明感 薄づき オールスキン",
+      "priceAtReview": 3779,
+      "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/treasurebeauty/cabinet/item/179/17911342_1.jpg?_ex=600x600",
+      "reviewed": true,
+      "reason": "本体・パフ・蓋が主役。画像内の色番号とAPI商品名が一致。3色の構図が近い。",
+      "limitation": "小さなラッピング案内・販売店ロゴあり。文字なし素材ではない。"
+    },
+    {
+      "shade": "01",
+      "candidateId": "01-extra4-1",
+      "itemCode": "bellcosme:10087393",
+      "itemName": "コスメデコルテ ルース パウダー 01 Crystal Translucent 20g | ルースパウダー 肌の透明感 薄づき オールスキン",
+      "priceAtReview": 3608,
+      "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/bellcosme/cabinet/item/179/17911389_1.jpg?_ex=600x600",
+      "reviewed": true,
+      "reason": "本体・パフ・蓋が主役。画像内の色番号とAPI商品名が一致。3色の構図が近い。",
+      "limitation": "小さなラッピング案内・販売店ロゴあり。文字なし素材ではない。"
+    },
+    {
+      "shade": "03",
+      "candidateId": "03-1-1",
+      "itemCode": "treasurebeauty:10096758",
+      "itemName": "コスメデコルテ ルース パウダー 03 Luminous Pink 20g | ルースパウダー 肌の透明感 薄づき オールスキン",
+      "priceAtReview": 3807,
+      "imageUrl": "https://thumbnail.image.rakuten.co.jp/@0_mall/treasurebeauty/cabinet/item/179/17911516_1.jpg?_ex=600x600",
+      "reviewed": true,
+      "reason": "本体・パフ・蓋が主役。画像内の色番号とAPI商品名が一致。3色の構図が近い。",
+      "limitation": "小さなラッピング案内・販売店ロゴあり。文字なし素材ではない。"
+    }
+  ]
+}

@@ -1,8 +1,10 @@
+try { process.loadEnvFile?.(require('node:path').join(__dirname, '..', '.env.local')); } catch (e) { if (e.code !== 'ENOENT') throw e; }
 // URL のスラッグ（例: t-interior/hps05）から商品を特定できるか検証する。
 // GitHub Actions 上で実行し、ログで結果を確認する。
-const APP_ID = '9a9bb16b-a393-414a-ad63-ea58ecf01daa';
-const ACCESS_KEY = 'pk_utmSC6YohMKR5EE6CDCiuC06NbdYwptCTfGFsk3LZhd';
-const AFF_ID = '534cdfaf.e35a1702.534cdfb0.c0ce9a58';
+const APP_ID = process.env.RAKUTEN_APPLICATION_ID;
+const ACCESS_KEY = process.env.RAKUTEN_ACCESS_KEY;
+const AFF_ID = process.env.RAKUTEN_AFFILIATE_ID;
+if (!APP_ID || !ACCESS_KEY) { console.error('RAKUTEN_APPLICATION_ID と RAKUTEN_ACCESS_KEY をサーバー環境変数に設定してください'); process.exit(1); }
 const ENDPOINT = 'https://openapi.rakuten.co.jp/ichibams/api/IchibaItem/Search/20260701';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -1,0 +1,20 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..');
+const output = path.join(root, 'public');
+const config = JSON.parse(fs.readFileSync(path.join(root, 'vercel.json'), 'utf8'));
+assert.equal(config.outputDirectory, 'public');
+assert.equal(config.git.deploymentEnabled, false, 'Git auto-deploy must remain disabled before release approval');
+assert.equal(config.buildCommand, 'npm run build');
+assert.equal(JSON.parse(fs.readFileSync(path.join(root, 'package.json'))).engines.node, '24.x');
+assert.deepEqual(fs.readdirSync(output).sort(), ['assets','collector.html','index.html']);
+assert(fs.readFileSync(path.join(output, 'index.html'),'utf8').includes('href="/collector.html"'));
+for (const file of ['assets/collector.js','assets/sns-core.js','assets/vendor/tesseract.min.js','assets/vendor/worker.min.js','assets/vendor/jszip.min.js','assets/vendor/lang/eng.traineddata.gz','assets/vendor/lang/jpn.traineddata.gz','assets/vendor/core/tesseract-core-simd-lstm.wasm']) assert(fs.statSync(path.join(output,file)).size>0, file);
+let secrets=[];
+const envFile=path.join(root,'.env.local');
+if(fs.existsSync(envFile)) secrets=fs.readFileSync(envFile,'utf8').split(/\r?\n/).filter(s=>/^RAKUTEN_(APPLICATION_ID|ACCESS_KEY)=/.test(s)).map(s=>s.slice(s.indexOf('=')+1)).filter(Boolean);
+let count=0;
+function walk(dir){for(const entry of fs.readdirSync(dir,{withFileTypes:true})){const file=path.join(dir,entry.name);assert(!entry.isSymbolicLink(),'No public symlinks');assert(!entry.name.startsWith('.env'));if(entry.isDirectory())walk(file);else{const bytes=fs.readFileSync(file);for(const secret of secrets)assert(!bytes.includes(Buffer.from(secret)),'Configured API credential found in public output');count++;}}}
+walk(output);
+console.log(`PASS release build: ${count} public files, required OCR assets, navigation, no local credentials or server/source files, Git auto-deploy disabled`);

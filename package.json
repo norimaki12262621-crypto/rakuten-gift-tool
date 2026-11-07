@@ -1,0 +1,27 @@
+{
+  "name": "rakuten-gift-tool",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "prepare-assets": "node scripts/prepare-assets.cjs",
+    "dev": "node scripts/dev.cjs",
+    "test": "node tests/sns-core.test.cjs && node tests/sns-api.test.cjs && node tests/rakuten-image.test.cjs",
+    "build": "node scripts/build.cjs",
+    "test:browser": "npm run build && node tests/sns-browser.cjs",
+    "predev": "npm run build",
+    "preview:build": "node scripts/preview-build.cjs",
+    "verify:release": "npm run build && node scripts/verify-release.cjs"
+  },
+  "dependencies": {
+    "@tesseract.js-data/eng": "1.0.0",
+    "@tesseract.js-data/jpn": "1.0.0",
+    "jszip": "3.10.1",
+    "tesseract.js": "6.0.1"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
+  "engines": {
+    "node": "24.x"
+  }
+}

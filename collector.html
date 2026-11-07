@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SNS商品画像 自動収集</title>
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/assets/collector.css" />
+    <script defer src="/assets/vendor/tesseract.min.js"></script>
+    <script defer src="/assets/vendor/jszip.min.js"></script>
+    <script defer src="/assets/sns-core.js"></script>
+    <script defer src="/assets/collector.js"></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <a href="/">← 楽天ランキングへ</a>
+        <p class="eyebrow">PHOTO COLLECTION</p>
+        <h1>SNS商品画像 自動収集</h1>
+        <p>楽天の実商品画像を集めて、色を確認し、ChatGPTへ渡す。</p>
+      </header>
+      <form id="search-form">
+        <div class="fields">
+          <label
+            >商品名
+            <input
+              id="product"
+              required
+              maxlength="150"
+              placeholder="例：3Dボリューミンググロス" /></label
+          ><label
+            >ブランド名
+            <input id="brand" maxlength="80" placeholder="例：fwee" /></label
+          ><label
+            >色番号・色名・濃度（1行に1色／最大6色）<textarea
+              id="colors"
+              rows="4"
+              placeholder="B02 ソルベ 70%&#10;B03 キャンディー 70%"
+            ></textarea>
+          </label>
+        </div>
+        <div class="row">
+          <label
+            ><input type="checkbox" id="large" checked />
+            APIの同じ画像を大きいサイズで取得（画像パスは変更しません）</label
+          >
+        </div>
+        <div class="row">
+          <label
+            ><input type="checkbox" id="include-unavailable" checked />
+            在庫切れも画像候補に含める</label
+          ><label
+            >1検索の商品数
+            <select id="limit">
+              <option value="4">4商品・まず試す</option>
+              <option value="8" selected>8商品</option>
+              <option value="15">15商品・詳しく</option>
+              <option value="30">30商品・最大120画像まで</option>
+            </select></label
+          >
+        </div>
+        <div class="row">
+          <button id="search" type="submit">商品検索・画像収集を開始</button
+          ><button id="cancel" type="button" disabled>中止</button
+          ><button id="more" type="button" disabled>次のページも収集</button>
+        </div>
+      </form>
+      <section class="notice">
+        <strong>画像評価は補助的な推定です。</strong>
+        本体・箱・バナーを完全に判別するものではありません。OCRで読めない色は自動確定しません。別色・濃度違いは不一致にし、元画像のロゴや文字は削除しません。英数字の色番号と日本語の色名をブラウザ内OCRで照合します。小さな文字や装飾文字が読めない場合は人の目で確認してください。
+      </section>
+      <p id="progress" role="status" aria-live="polite">
+        商品名を入力して開始してください。画像やOCRはこのブラウザ内で処理し、外部AIへ送信しません。
+      </p>
+      <div id="search-errors" role="alert"></div>
+      <section id="handoff">
+        <h2>採用画像とChatGPTへの受け渡し</h2>
+        <div id="selection" class="selections"></div>
+        <div class="row">
+          <label
+            >投稿先
+            <select id="format">
+              <option value="instagram">Instagram 4:5</option>
+              <option value="tiktok">TikTok 9:16</option>
+            </select></label
+          ><label class="rights"
+            ><input id="rights" type="checkbox" />
+            採用画像の本体・色の対応と、画像の利用条件を確認しました</label
+          >
+        </div>
+        <p class="small">
+          楽天APIで取得できることは、SNS転載の許諾を意味しません。<a
+            href="https://webservice.rakuten.co.jp/terms/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >楽天API利用規約</a
+          >・<a
+            href="https://affiliate.rakuten.co.jp/guideline/"
+            target="_blank"
+            rel="noopener noreferrer"
+            >楽天アフィリエイトガイドライン</a
+          >と各取得元の条件を確認してください。この画面は画像を外部公開せず、共有URLも自動作成しません。
+        </p>
+        <button id="export" type="button" disabled>
+          採用元画像＋manifest.jsonをZIP保存
+        </button>
+        <p class="small">
+          ZIPには確定した画像の元バイト列・色番号・色名・価格・出典・解像度・取得結果を保存します。画像の描き直しや投稿デザインの制作は行いません。ページ再読み込みで選択は消えます。
+        </p>
+      </section>
+      <section>
+        <h2>画像候補</h2>
+        <div class="row">
+          <label
+            >状態で絞る
+            <select id="filter">
+              <option value="all">すべて</option>
+              <option value="confirmed">確定</option>
+              <option value="review">要確認</option>
+              <option value="mismatch">不一致</option>
+              <option value="failed">取得失敗</option>
+            </select></label
+          ><span id="counts"></span>
+        </div>
+        <div id="candidates"></div>
+      </section>
+    </main>
+    <dialog id="confirm-dialog">
+      <form method="dialog">
+        <h2 id="confirm-title">画像を手動確認</h2>
+        <img id="confirm-image" alt="採用候補の実画像" />
+        <div id="confirm-meta"></div>
+        <p id="confirm-warning"></p>
+        <label
+          ><input id="confirm-check" type="checkbox" />
+          商品本体・色番号・色名・濃度を商品ページと照合し、一致を確認しました</label
+        >
+        <div class="row">
+          <button value="cancel">戻る</button
+          ><button id="confirm-submit" value="confirm" disabled>
+            手動で確定して採用
+          </button>
+        </div>
+      </form>
+    </dialog>
+  </body>
+</html>

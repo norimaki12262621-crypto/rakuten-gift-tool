@@ -159,6 +159,7 @@ textarea { width: 100%; height: 340px; font-size: 12px; font-family: monospace; 
 </style>
 </head>
 <body>
+<a href="/collector.html" style="display:block;padding:14px 20px;background:#205f4a;color:white;text-align:center;font-weight:bold">SNS商品画像 自動収集 →</a>
 
 <div class="header">
   <div class="header-sub">Rakuten API · Real Products Only</div>
@@ -310,6 +311,68 @@ textarea { width: 100%; height: 340px; font-size: 12px; font-family: monospace; 
   <div class="stat"><div class="stat-n" id="sPrice">—</div><div class="stat-l">平均価格</div></div>
 </div>
 
+<button class="sns-btn" onclick="openTikTokPreview()">📱 TikTok用5枚画像をプレビュー</button>
+<style>
+#tiktok-image-selection {width:min(1150px,96vw);max-height:92vh;margin:auto;padding:24px;border:1px solid #decbd0;border-radius:16px;background:#fff9fb;color:#252438;font:inherit;overflow:auto}
+#tiktok-image-selection::backdrop {background:#18102099}
+#tiktok-image-selection h2 {font-size:22px;margin:0}
+#tiktok-image-selection p {line-height:1.6}
+#tiktok-image-selection button {font:inherit;cursor:pointer;border:1px solid #d4bac4;border-radius:8px;padding:9px 14px;background:#fff;color:#442d3c}
+#tiktok-image-selection button:focus-visible,#tiktok-image-selection a:focus-visible {outline:3px solid #903c67;outline-offset:2px}
+#tiktok-image-selection .ti-head button {flex-shrink:0;white-space:nowrap}
+#tiktok-image-selection button:disabled {opacity:.5;cursor:not-allowed}
+#tiktok-image-selection .ti-head {display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
+#tiktok-image-selection .ti-slots {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:18px 0}
+#tiktok-image-selection .ti-slot {padding:12px;border:1px solid #dfcbd2;border-radius:10px;background:white;min-width:0}
+#tiktok-image-selection .ti-slot.active {outline:2px solid #a94370}
+#tiktok-image-selection .ti-slot img {width:100%;height:110px;object-fit:contain;margin-top:8px}
+#tiktok-image-selection .ti-slot label {display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-top:10px;cursor:pointer}
+#tiktok-image-selection .ti-meta {font-size:12px;overflow-wrap:anywhere;margin:6px 0;line-height:1.55}
+#tiktok-image-selection .ti-status {font-weight:bold;color:#8c3157;margin:8px 0;font-size:13px}
+#tiktok-image-selection .ti-search {display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 8px}
+#tiktok-image-selection input[type=search] {flex:1;min-width:160px;padding:10px;font:inherit;border:1px solid #cbbac1;border-radius:8px;background:white}
+#tiktok-image-selection .ti-grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin:16px 0}
+#tiktok-image-selection .ti-candidate {padding:12px;border:1px solid #dfcbd2;background:#fff;border-radius:10px;min-width:0}
+#tiktok-image-selection .ti-candidate.selected {outline:2px solid #a94370}
+#tiktok-image-selection .ti-thumb {width:100%;padding:4px;display:block}
+#tiktok-image-selection .ti-thumb img {width:100%;height:175px;object-fit:contain;display:block}
+#tiktok-image-selection .ti-footer {padding-top:14px;border-top:1px solid #dfcbd2;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+#tiktok-image-selection #ti-continue {background:#96375e;color:white}
+@media(max-width:600px) {#tiktok-image-selection {padding:14px}#tiktok-image-selection .ti-slots {grid-template-columns:1fr}#tiktok-image-selection .ti-grid {grid-template-columns:1fr}#tiktok-image-selection .ti-slot img {height:130px}}
+</style>
+<dialog id="tiktok-image-selection" aria-labelledby="ti-heading">
+  <div class="ti-head"><h2 id="ti-heading">TikTok用の商品画像を選択</h2><button type="button" onclick="document.getElementById('tiktok-image-selection').close()" aria-label="画像選択を閉じる">閉じる</button></div>
+  <p>00・01・03それぞれの本体画像を選び、商品ページと色番号を確認してください。画像は楽天APIの実画像をそのまま使用します。</p>
+  <p class="ti-meta">本体が大きい → 販促バナー・ショップロゴなし → 色番号一致 → 明るく高画質 → 3色の統一感、の順で比較してください。選択内容はこのページを開いている間だけ保持します。</p>
+  <div id="ti-slots" class="ti-slots"></div>
+  <form id="ti-search-form" class="ti-search" onsubmit="event.preventDefault();searchTikTokCandidates()">
+    <input type="search" id="ti-keyword" aria-label="画像候補の商品検索" placeholder="商品名・色番号で検索" value="コスメデコルテ ルース パウダー 00" required>
+    <button id="ti-search-button" type="submit">楽天APIで候補を検索</button>
+    <button type="button" onclick="importTikTokRanking()">ランキング・検索結果から候補を追加</button>
+  </form>
+  <p id="ti-search-status" role="status" aria-live="polite">検索するか、既存のランキング・検索結果から候補を追加してください。</p>
+  <p id="ti-active-label" class="ti-status"></p>
+  <div id="ti-candidates" class="ti-grid"></div>
+  <div class="ti-footer"><p id="ti-progress" role="status" aria-live="polite"></p><button id="ti-continue" type="button" disabled onclick="openTikTokPreview()">3色を確定して5枚プレビューへ</button></div>
+</dialog>
+
+<style>
+#tiktok-preview::backdrop {background:#20121ccc}
+#tiktok-deck-nav {display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+#tiktok-preview button {padding:9px 14px;border:1px solid #d5b6c3;border-radius:8px;background:white;color:#603f50;cursor:pointer;font:inherit}
+#tiktok-deck-nav button[aria-pressed=true] {background:#8f3f66;color:white}
+#tiktok-slides canvas {display:block;width:min(100%,540px);height:auto;margin:auto;border-radius:0}
+#tiktok-slides article[hidden] {display:none}
+#tiktok-slides .td-actions {display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap;padding:18px 0;font-size:14px}
+#tiktok-note {line-height:1.7;margin-top:10px}
+</style>
+<dialog id="tiktok-preview" aria-labelledby="tiktok-heading" style="width:min(1100px,94vw);max-height:90vh;margin:auto;border:0;border-radius:16px;padding:24px;background:#f8f5ef">
+  <div style="display:flex;justify-content:space-between;gap:16px;align-items:center"><h2 id="tiktok-heading">TikTok用 5枚プレビュー</h2><button onclick="document.getElementById('tiktok-preview').close()" aria-label="閉じる">閉じる</button></div>
+  <button type="button" onclick="openTikTokImageSelection()">画像選択に戻る</button>
+  <p id="tiktok-note" role="status"></p>
+  <nav id="tiktok-deck-nav" aria-label="投稿画像を選ぶ"></nav>
+  <div id="tiktok-slides"></div>
+</dialog>
 <div class="area" id="area">
   <div class="empty"><div style="font-size:36px;margin-bottom:10px">🎁</div>条件を選んでボタンを押してください<br><small style="font-size:11px">楽天APIで実在商品のみ取得します</small></div>
 </div>
@@ -341,8 +404,6 @@ textarea { width: 100%; height: 340px; font-size: 12px; font-family: monospace; 
 </div>
 
 <script>
-const APP_ID = '9a9bb16b-a393-414a-ad63-ea58ecf01daa';
-const AFF_ID = '534cdfaf.e35a1702.534cdfb0.c0ce9a58';
 const EXCLUDE = ['洗剤','掃除','テレビ','パソコン','ケーブル'];
 const ICONS = ['','🥇','🥈','🥉','4️⃣','5️⃣'];
 let ranking = [];
@@ -362,7 +423,7 @@ function score(item, minAvg, minCnt) {
 }
 
 function affUrl(url) {
-  return `https://hb.afl.rakuten.co.jp/hgc/${AFF_ID}/?pc=${encodeURIComponent(url)}&m=${encodeURIComponent(url)}`;
+  try { const u = new URL(url); return /^https?:$/.test(u.protocol) ? u.href : ''; } catch { return ''; }
 }
 
 function stars(avg) {
@@ -525,8 +586,6 @@ async function run() {
 
   try {
     const params = new URLSearchParams({
-      applicationId: APP_ID,
-      affiliateId: AFF_ID,
       keyword: brand ? genre + ' ' + brand : genre,
       hits: 30,
       minPrice: minP,
@@ -1018,6 +1077,280 @@ function addToRanking(idx) {
   if (btn) { btn.textContent = '追加済'; btn.classList.add('added'); btn.disabled = true; }
   area.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+// Manual decisions remain separate from ranking, favorites and API records.
+const tiktokShades = ['00', '01', '03'];
+const tiktokImageChoices = { '00': null, '01': null, '03': null };
+const tiktokImageCandidates = new Map();
+let tiktokActiveShade = '00';
+let tiktokSearching = false;
+
+function tikTokHttps(value) {
+  try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password ? u.href : ''; } catch { return ''; }
+}
+function tikTokProductPage(value) {
+  let raw = tikTokHttps(value);
+  for (let n = 0; n < 4 && raw; n++) {
+    const u = new URL(raw);
+    if (u.hostname === 'item.rakuten.co.jp') return u.href;
+    if (u.hostname !== 'hb.afl.rakuten.co.jp') return '';
+    raw = tikTokHttps(u.searchParams.get('pc'));
+  }
+  return '';
+}
+function tikTokNameShades(name) {
+  return [...new Set(String(name || '').match(/(?<!\d)(?:101|0[0-9])(?!\d)/g) || [])];
+}
+function tikTokText(tag, text, className) {
+  const el = document.createElement(tag); el.textContent = text;
+  if (className) el.className = className;
+  return el;
+}
+function tikTokMetadata(host, candidate, confirmed = false) {
+  host.append(tikTokText('p', candidate.item.itemName || '商品名未取得', 'ti-meta'));
+  const shades = tikTokNameShades(candidate.item.itemName);
+  host.append(tikTokText('p', `商品名の色番号：${shades.length ? shades.join('・') + (shades.length > 1 ? '（複数色）' : '') : '未判定'} ／ ${confirmed ? '画像との一致は手動確認済み' : '画像との一致は要確認'}`, 'ti-meta'));
+  host.append(tikTokText('p', `画像URL：${candidate.imageUrl}`, 'ti-meta'));
+  if (candidate.pageUrl) {
+    const link = tikTokText('a', `商品ページ：${candidate.pageUrl}`, 'ti-meta');
+    link.href = candidate.pageUrl; link.target = '_blank'; link.rel = 'noopener noreferrer'; host.append(link);
+  } else host.append(tikTokText('p', '商品ページURL：未取得（確定できません）', 'ti-meta'));
+}
+function addTikTokCandidates(items) {
+  for (const item of items) {
+    const pageUrl = tikTokProductPage(item.itemUrl);
+    const urls = item.mediumImageUrls?.length ? item.mediumImageUrls : (item.smallImageUrls || []);
+    for (const source of urls) {
+      const imageUrl = tikTokHttps(typeof source === 'string' ? source : source?.imageUrl);
+      if (!imageUrl) continue;
+      const id = JSON.stringify([item.itemCode || pageUrl, imageUrl]);
+      if (!tiktokImageCandidates.has(id)) tiktokImageCandidates.set(id, { id, item: { ...item }, imageUrl, pageUrl, loaded: false });
+    }
+  }
+}
+function importTikTokRanking() {
+  addTikTokCandidates([...ranking.map(entry => entry.item), ...(window._srItems || [])]);
+  renderTikTokSelection();
+}
+function openTikTokImageSelection() {
+  document.getElementById('tiktok-preview').close();
+  importTikTokRanking();
+  const dialog = document.getElementById('tiktok-image-selection');
+  if (!dialog.open) dialog.showModal();
+}
+async function searchTikTokCandidates() {
+  if (tiktokSearching) return;
+  const keyword = document.getElementById('ti-keyword').value.trim();
+  const status = document.getElementById('ti-search-status');
+  if (!keyword) { status.textContent = '商品名や色番号を入力してください。'; return; }
+  tiktokSearching = true;
+  const button = document.getElementById('ti-search-button'); button.disabled = true;
+  status.textContent = '楽天APIから候補を取得中…';
+  try {
+    const params = new URLSearchParams({keyword, hits:30, minPrice:1, maxPrice:9999999});
+    const res = await fetch(`/api/rakuten?${params}`);
+    if (!res.ok) throw new Error(`候補を取得できませんでした（HTTP ${res.status}）`);
+    const data = await res.json();
+    if (data.error) throw new Error('楽天APIで候補を取得できませんでした。時間をおいて再検索してください。');
+    const items = (data.Items || []).map(value => value.Item || value);
+    if (!items.length) { status.textContent = '該当商品がありません。別のキーワードで検索してください。選択済み画像は保持しています。'; return; }
+    const before = tiktokImageCandidates.size;
+    addTikTokCandidates(items);
+    renderTikTokSelection();
+    status.textContent = `${items.length}商品を取得。画像候補を${tiktokImageCandidates.size - before}件追加しました（計${tiktokImageCandidates.size}件）。色番号は自動確定しません。`;
+  } catch (e) { status.textContent = e instanceof TypeError ? '通信に失敗しました。再検索してください。選択済み画像は保持しています。' : e.message; }
+  finally { tiktokSearching = false; button.disabled = false; }
+}
+function tikTokChoicesReady() {
+  return tiktokShades.every(shade => {
+    const choice = tiktokImageChoices[shade];
+    return choice?.confirmed && choice.candidate.loaded && choice.candidate.pageUrl;
+  });
+}
+function updateTikTokProgress() {
+  const count = tiktokShades.filter(s => tiktokImageChoices[s]?.confirmed && tiktokImageChoices[s].candidate.loaded).length;
+  document.getElementById('ti-progress').textContent = `${count}/3色 確定済み。3色とも画像・商品ページ・色番号の確認が必要です。`;
+  document.getElementById('ti-continue').disabled = !tikTokChoicesReady();
+}
+function renderTikTokSlots() {
+  const slots = document.getElementById('ti-slots'); slots.replaceChildren();
+  for (const shade of tiktokShades) {
+    const slot = document.createElement('section'); slot.className = 'ti-slot' + (shade === tiktokActiveShade ? ' active' : ''); slot.dataset.shade = shade;
+    const tab = tikTokText('button', `${shade} の画像を選ぶ`); tab.type = 'button'; tab.setAttribute('aria-pressed', String(shade === tiktokActiveShade));
+    tab.onclick = () => { tiktokActiveShade = shade; document.getElementById('ti-keyword').value = `コスメデコルテ ルース パウダー ${shade}`; renderTikTokSelection(); };
+    slot.append(tab);
+    const choice = tiktokImageChoices[shade];
+    slot.append(tikTokText('p', !choice ? '未選択・要確認' : choice.confirmed ? '確定済み（手動確認）' : '選択済み・要確認', 'ti-status'));
+    if (choice) {
+      const c = choice.candidate;
+      const image = document.createElement('img'); image.src = c.imageUrl; image.alt = `${shade} 採用候補：${c.item.itemName}`; slot.append(image);
+      tikTokMetadata(slot, c, choice.confirmed);
+      const nameShades = tikTokNameShades(c.item.itemName);
+      if (nameShades.length !== 1 || nameShades[0] !== shade) slot.append(tikTokText('p', '商品名だけではこの色を確定できません。共通画像・別色の可能性があります。必ず商品ページと画像を確認してください。', 'ti-status'));
+      const label = document.createElement('label');
+      const checkbox = document.createElement('input'); checkbox.type = 'checkbox'; checkbox.checked = choice.confirmed;
+      checkbox.disabled = !c.loaded || !c.pageUrl;
+      checkbox.setAttribute('aria-label', `${shade} の画像と商品ページの色番号を確認して確定`);
+      checkbox.onchange = () => { choice.confirmed = checkbox.checked; renderTikTokSlots(); updateTikTokProgress(); };
+      label.append(checkbox, document.createTextNode(`画像が商品本体で、商品ページと色番号 ${shade} が一致することを確認しました`));slot.append(label);
+      if (!c.loaded) slot.append(tikTokText('p', '画像が未読込、または読込に失敗しています。確定できません。', 'ti-meta'));
+    }
+    slots.append(slot);
+  }
+}
+function renderTikTokSelection() {
+  renderTikTokSlots(); updateTikTokProgress();
+  document.getElementById('ti-active-label').textContent = `色番号 ${tiktokActiveShade} の候補を選択中。サムネイルをクリックして採用候補に設定してください。`;
+  const grid = document.getElementById('ti-candidates'); grid.replaceChildren();
+  if (!tiktokImageCandidates.size) grid.append(tikTokText('p', '画像候補はまだありません。楽天APIで検索してください。'));
+  for (const c of tiktokImageCandidates.values()) {
+    const card = document.createElement('article'); card.className = 'ti-candidate' + (tiktokImageChoices[tiktokActiveShade]?.candidate.id === c.id ? ' selected' : '');
+    const button = document.createElement('button'); button.type = 'button'; button.className = 'ti-thumb'; button.disabled = true;
+    button.setAttribute('aria-label', `${tiktokActiveShade} の候補に選択：${c.item.itemName}`);
+    button.setAttribute('aria-pressed', String(tiktokImageChoices[tiktokActiveShade]?.candidate.id === c.id));
+    const image = document.createElement('img'); image.alt = c.item.itemName || '楽天APIの商品画像';
+    image.onload = () => { c.loaded = true; button.disabled = false; renderTikTokSlots(); updateTikTokProgress(); };
+    image.onerror = () => { c.loaded = false; for (const s of tiktokShades) if (tiktokImageChoices[s]?.candidate.id === c.id) tiktokImageChoices[s].confirmed = false; button.disabled = true; image.alt = '画像読込失敗・選択できません'; renderTikTokSlots(); updateTikTokProgress(); };
+    image.src = c.imageUrl;
+    button.append(image);
+    button.onclick = () => {
+      if (!c.loaded) return;
+      const current = tiktokImageChoices[tiktokActiveShade];
+      if (current?.candidate.id !== c.id) tiktokImageChoices[tiktokActiveShade] = {candidate:c, confirmed:false};
+      renderTikTokSelection();
+    };
+    card.append(button); tikTokMetadata(card, c); grid.append(card);
+  }
+}
+
+
+// All decorative elements are vectors. Product photos are drawn unchanged.
+let tiktokDeckRun = 0;
+let tiktokDeckPage = 0;
+function showTikTokDeckPage(index) {
+  tiktokDeckPage = index;
+  document.querySelectorAll('#tiktok-slides article').forEach((el, n) => { el.hidden = n !== index; });
+  document.querySelectorAll('#tiktok-deck-nav button').forEach((el, n) => el.setAttribute('aria-pressed', String(n === index)));
+}
+function downloadTikTokSlide(canvas, index) {
+  canvas.toBlob(blob => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob); const link = document.createElement('a');
+    link.href = url; link.download = `decorte-tiktok-${index + 1}.png`; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }, 'image/png');
+}
+async function loadTikTokPhoto(candidate) {
+  const url = new URL(candidate.imageUrl);
+  if (url.hostname !== 'thumbnail.image.rakuten.co.jp' || !url.pathname.startsWith('/@0_mall/')) throw new Error('楽天の商品画像URLを選択してください。');
+  // Request a larger rendering of the exact same API image, without changing its path.
+  url.searchParams.set('_ex', '1000x1000');
+  const response = await fetch('/api/rakuten-image?url=' + encodeURIComponent(url.href));
+  if (!response.ok) throw new Error(`商品画像を取得できませんでした（HTTP ${response.status}）。画像選択に戻って確認してください。`);
+  const objectUrl = URL.createObjectURL(await response.blob());
+  try { const image = new Image(); image.src = objectUrl; await image.decode(); return image; }
+  finally { URL.revokeObjectURL(objectUrl); }
+}
+function paintTikTokSlide(canvas, index, images) {
+  const c = canvas.getContext('2d'); const W = 1080, H = 1920;
+  const ink = '#563d4b', rose = '#a35574';
+  const serif = '"Noto Serif JP", "Times New Roman", serif';
+  const sans = '"Zen Kaku Gothic New", sans-serif';
+  function text(value, x, y, size, options = {}) {
+    c.fillStyle = options.color || ink; c.font = `${options.weight || 500} ${size}px ${options.serif ? serif : sans}`;
+    c.textAlign = options.center ? 'center' : 'left'; c.fillText(value, x, y); c.textAlign = 'left';
+  }
+  function sparkle(x, y, r, alpha) {
+    c.save(); c.globalAlpha = alpha; c.fillStyle = '#fff'; c.beginPath();
+    for (let n = 0; n < 8; n++) { const a = n * Math.PI / 4; const radius = n % 2 ? r * .19 : r; const px = x + Math.cos(a) * radius, py = y + Math.sin(a) * radius; n ? c.lineTo(px, py) : c.moveTo(px, py); }
+    c.closePath(); c.fill(); c.restore();
+  }
+  function photo(image, x, y, size) {
+    c.save(); c.shadowColor = '#c79ab830'; c.shadowBlur = 30; c.fillStyle = '#fff'; c.beginPath(); c.roundRect(x, y, size, size, 35); c.fill(); c.restore();
+    const inset = size * .025, factor = (size - inset * 2) / Math.max(image.naturalWidth, image.naturalHeight);
+    const w = image.naturalWidth * factor, h = image.naturalHeight * factor;
+    c.drawImage(image, x + (size - w) / 2, y + (size - h) / 2, w, h);
+  }
+  const bg = c.createLinearGradient(0, 0, W, H); bg.addColorStop(0, '#fff7fb'); bg.addColorStop(.5, '#f5dfeb'); bg.addColorStop(1, '#fceef4'); c.fillStyle = bg; c.fillRect(0, 0, W, H);
+  // Delicate scalloped lace at the edges, with stitched loops and pearl dots.
+  c.save(); c.strokeStyle = '#ffffffdd'; c.lineWidth = 3;
+  for (let y = 22; y < H; y += 66) for (const x of [18, W - 18]) {
+    c.beginPath(); c.ellipse(x, y, 39, 29, 0, 0, Math.PI * 2); c.stroke();
+    for (let n = 0; n < 8; n++) { const a = n * Math.PI / 4; c.beginPath(); c.ellipse(x + Math.cos(a) * 22, y + Math.sin(a) * 19, 4, 8, a, 0, Math.PI * 2); c.stroke(); }
+  }
+  c.setLineDash([3, 10]); c.strokeRect(65, 64, 950, 1790); c.setLineDash([]); c.restore();
+  for (let n = 0; n < 32; n++) sparkle(84 + (n * 173 + index * 31) % 914, 110 + (n * 271) % 1640, 5 + n % 4 * 5, .55 + n % 3 * .15);
+  text('PR', 105, 128, 30, {color:rose});
+  text('DECORTÉ', 540, 275, index === 0 ? 150 : 118, {serif:true,center:true,weight:700});
+  text('ルース パウダー', 540, 369, 60, {serif:true,center:true});
+  c.strokeStyle = '#cda9b8'; c.lineWidth = 2; c.beginPath(); c.moveTo(195, 412); c.lineTo(885, 412); c.stroke();
+  const shadeNames = ['translucent', 'crystal translucent', 'luminous pink'];
+  if (index === 0) {
+    text('ときめく粉色、', 540, 551, 80, {center:true,serif:true,weight:700});
+    text('どれを選ぶ？', 540, 658, 80, {center:true,serif:true,weight:700});
+    photo(images[2], 118, 737, 844);
+    text('00  /  01  /  03', 540, 1672, 50, {center:true,color:rose});
+    text('お気に入りのニュアンスを見つけて。', 540, 1750, 37, {center:true});
+  } else if (index < 4) {
+    const n = index - 1, shade = tiktokShades[n];
+    text(shade, 108, 620, 172, {serif:true,color:rose});
+    text(shadeNames[n], 357, 570, n === 1 ? 43 : 51, {serif:true});
+    text(['軽やかな気分を、ひとさじ。','ふんわり、私らしいピンク。','ピンクのときめきを、主役に。'][n], 540, 718, 54, {center:true,serif:true,weight:700});
+    photo(images[n], 110, 801, 860);
+    text(`DECORTÉ ルース パウダー ${shade}`, 540, 1747, 37, {center:true});
+  } else {
+    text('3つの粉色、あなたはどれ？', 540, 545, 59, {center:true,serif:true,weight:700});
+    for (let n = 0; n < 3; n++) {
+      const y = 610 + n * 352;
+      c.fillStyle = '#ffffffbd'; c.beginPath(); c.roundRect(100, y, 880, 327, 30); c.fill();
+      photo(images[n], 115, y + 14, 299);
+      text(tiktokShades[n], 465, y + 131, 102, {serif:true,color:rose});
+      text(shadeNames[n], 465, y + 213, n === 1 ? 35 : 41, {serif:true});
+      text(['00をチェック','01をチェック','03をチェック'][n], 465, y + 278, 32);
+    }
+    text('色・容量・最新情報は商品ページで。', 540, 1770, 36, {center:true});
+  }
+  text('画面や光の条件により、実際の色と異なって見える場合があります。', 540, 1833, 25, {center:true,color:'#775a69'});
+  text(`${String(index + 1).padStart(2, '0')} / 05`, 910, 1880, 27, {color:rose});
+}
+async function openTikTokPreview() {
+  if (!tikTokChoicesReady()) { openTikTokImageSelection(); return; }
+  const selected = tiktokShades.map(shade => tiktokImageChoices[shade].candidate);
+  if (selected.some(c => !/コスメデコルテ|DECORT[EÉ]/i.test(c.item.itemName) || !/ルース\s*パウダー|LOOSE\s*POWDER/i.test(c.item.itemName))) {
+    openTikTokImageSelection(); document.getElementById('ti-search-status').textContent = '今回の5枚はDECORTÉ ルース パウダー用です。3色とも対象商品の画像を選択してください。'; return;
+  }
+  const run = ++tiktokDeckRun;
+  document.getElementById('tiktok-image-selection').close();
+  const dialog = document.getElementById('tiktok-preview'), host = document.getElementById('tiktok-slides'), note = document.getElementById('tiktok-note');
+  host.replaceChildren(); document.getElementById('tiktok-deck-nav').replaceChildren();
+  note.textContent = '手動選択した楽天の商品画像を読み込み、5枚を制作しています…';
+  if (!dialog.open) dialog.showModal();
+  try {
+    const images = await Promise.all(selected.map(loadTikTokPhoto));
+    await document.fonts.ready;
+    if (run !== tiktokDeckRun || !dialog.open) return;
+    const names = ['表紙', '00', '01', '03', '3色比較'];
+    const nav = document.getElementById('tiktok-deck-nav');
+    for (let index = 0; index < 5; index++) {
+      const article = document.createElement('article'); article.setAttribute('aria-label', `${index + 1}枚目：${names[index]}`);
+      const canvas = document.createElement('canvas'); canvas.width = 1080; canvas.height = 1920; canvas.setAttribute('role','img'); canvas.setAttribute('aria-label', `DECORTÉ ルース パウダー ${names[index]} 1080×1920`);
+      paintTikTokSlide(canvas, index, images); article.append(canvas);
+      const actions = document.createElement('div'); actions.className = 'td-actions';
+      const download = tikTokText('button', `${index + 1}枚目をPNG保存`); download.type='button'; download.onclick = () => downloadTikTokSlide(canvas, index); actions.append(download);
+      if (index > 0 && index < 4) {
+        const source = selected[index - 1];
+        const link = tikTokText('a', `選択色 ${tiktokShades[index-1]} の商品ページ`); link.href = source.pageUrl; link.target='_blank'; link.rel='noopener noreferrer'; actions.append(link);
+      }
+      article.append(actions); host.append(article);
+      const button = tikTokText('button', `${index + 1}｜${names[index]}`); button.type='button'; button.onclick=()=>showTikTokDeckPage(index); nav.append(button);
+    }
+    showTikTokDeckPage(0);
+    note.textContent = '各画像は1080×1920px。番号を押すと個別に表示します。PNG保存で投稿用画像をダウンロードできます。商品画像は手動選択したものを使用しています。';
+  } catch (e) {
+    if (run === tiktokDeckRun) note.textContent = e.message || '画像を読み込めませんでした。画像選択からやり直してください。';
+  }
+}
+
 </script>
 </body>
 </html>

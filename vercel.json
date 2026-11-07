@@ -1,0 +1,25 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "npm ci --ignore-scripts",
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "git": {
+    "deploymentEnabled": false
+  },
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 30
+    }
+  },
+  "headers": [
+    {
+      "source": "/assets/vendor/core/(.*).wasm",
+      "headers": [{ "key": "Content-Type", "value": "application/wasm" }]
+    },
+    {
+      "source": "/assets/vendor/lang/(.*).gz",
+      "headers": [{ "key": "Content-Type", "value": "application/gzip" }]
+    }
+  ]
+}

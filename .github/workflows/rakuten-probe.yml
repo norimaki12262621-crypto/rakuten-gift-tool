@@ -15,4 +15,22 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: node scripts/probe.js
+      - name: Check live API credential configuration
+        id: api-config
+        env:
+          RAKUTEN_APPLICATION_ID: ${{ secrets.RAKUTEN_APPLICATION_ID }}
+          RAKUTEN_ACCESS_KEY: ${{ secrets.RAKUTEN_ACCESS_KEY }}
+        run: |
+          if [ -n "$RAKUTEN_APPLICATION_ID" ] && [ -n "$RAKUTEN_ACCESS_KEY" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::Live API probe skipped: configure RAKUTEN_APPLICATION_ID and RAKUTEN_ACCESS_KEY repository secrets."
+          fi
+      - name: Run live API probe
+        if: steps.api-config.outputs.configured == 'true'
+        run: node scripts/probe.js
+        env:
+          RAKUTEN_APPLICATION_ID: ${{ secrets.RAKUTEN_APPLICATION_ID }}
+          RAKUTEN_ACCESS_KEY: ${{ secrets.RAKUTEN_ACCESS_KEY }}
+          RAKUTEN_AFFILIATE_ID: ${{ secrets.RAKUTEN_AFFILIATE_ID }}

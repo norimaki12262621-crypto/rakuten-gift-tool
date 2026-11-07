@@ -1,0 +1,44 @@
+name: SNS collector checks
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'api/**'
+      - 'assets/**'
+      - 'lib/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'index.html'
+      - 'collector.html'
+      - 'package*.json'
+      - 'vercel.json'
+      - '.github/workflows/sns-checks.yml'
+  pull_request:
+    paths:
+      - 'api/**'
+      - 'assets/**'
+      - 'lib/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'index.html'
+      - 'collector.html'
+      - 'package*.json'
+      - 'vercel.json'
+      - '.github/workflows/sns-checks.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run verify:release
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:browser
